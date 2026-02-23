@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>504班股票交易所 4.1 雲端與單機雙棲版</title>
+<!-- 引入 QRCode 生成套件 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+    /* 專業交易終端機配色 (Dark Mode) */
+    :root {
+        --primary: #3b82f6; --primary-dark: #2563eb;
+        --success: #ff4d4f; /* 台股紅漲 */
+        --danger: #00e676;  /* 台股綠跌 */
+        --warning: #f59e0b;
+        --bg-color: #0d1117; --card-bg: #161b22;
+        --text-main: #c9d1d9; --text-muted: #8b949e;
+        --border: #30363d; --highlight: #1f6feb;
+    }
+    
+    body { font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; line-height: 1.6; }
+    .container { max-width: 1200px; margin: auto; position: relative; }
+    
+    /* 標題與頁籤 */
+    h1 { text-align: center; color: #58a6ff; font-size: 2.2rem; margin-bottom: 20px; font-weight: 800; letter-spacing: 2px; text-shadow: 0 0 10px rgba(88,166,255,0.3); }
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 5px; }
+    .nav-tabs button { flex: 1; min-width: 120px; padding: 15px 20px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 16px; font-weight: bold; border-radius: 8px; color: var(--text-muted); transition: all 0.2s; }
+    .nav-tabs button:hover { background: #21262d; color: #fff; }
+    .nav-tabs button.active { background: var(--highlight); color: white; border-color: var(--highlight); box-shadow: 0 0 15px rgba(31,111,235,0.4); }
+    
+    /* 內容區塊與卡片 */
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    .card { background: var(--card-bg); padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 8px 24px rgba(0,0,0,0.5); margin-bottom: 25px; }
+    h3 { color: #58a6ff; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; display: inline-block;}
+    h4 { color: #e6edf3; margin-bottom: 15px; border-left: 4px solid var(--highlight); padding-left: 10px; }
+    
+    /* 表單元件 */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .form-group { display: flex; flex-direction: column; }
+    label { font-weight: bold; margin-bottom: 8px; color: var(--text-muted); font-size: 0.95rem; }
+    input, select, textarea { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 16px; background-color: #010409; color: var(--text-main); transition: border-color 0.2s; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--highlight); box-shadow: 0 0 0 2px rgba(31,111,235,0.3); }
+    
+    /* 按鈕 */
+    .btn { padding: 10px 20px; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-primary { background: var(--highlight); color: white; }
+    .btn-primary:hover { background: #388bfd; }
+    .btn-success { background: #2ea043; color: white; }
+    .btn-warning { background: #d29922; color: white; }
+    .btn-danger { background: #f85149; color: white; }
+    .btn-info { background: #8957e5; color: white; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+    .btn-outline:hover { background: var(--border); }
+    .btn-block { width: 100%; margin-top: 15px; }
+    
+    /* 表格 */
+    .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; background: var(--card-bg); white-space: nowrap; }
+    th, td { padding: 12px 15px; text-align: center; border-bottom: 1px solid var(--border); }
+    th { background-color: #010409; font-weight: bold; color: var(--text-muted); font-size: 0.9rem; }
+    tbody tr:hover { background-color: #21262d; }
+    
+    /* 漲跌標示 */
+    .text-up { color: var(--success); font-weight: bold; text-shadow: 0 0 5px rgba(255,77,79,0.3); }
+    .text-down { color: var(--danger); font-weight: bold; text-shadow: 0 0 5px rgba(0,230,118,0.3); }
+    .text-neutral { color: var(--text-muted); }
+    
+    /* 拖曳分組 */
+    .dnd-container { display: flex; flex-direction: column; gap: 20px; }
+    .dnd-pool { padding: 15px; background: #010409; border: 2px dashed var(--border); border-radius: 8px; min-height: 80px; display: flex; flex-wrap: wrap; gap: 10px; }
+    .dnd-pool.drag-over { border-color: var(--highlight); background: rgba(31,111,235,0.1); }
+    .dnd-groups-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+    .group-zone { background: #1c2128; border: 1px solid var(--border); border-radius: 8px; padding: 10px; min-height: 120px; display: flex; flex-direction: column; }
+    .group-zone.drag-over { border-color: var(--highlight); box-shadow: 0 0 8px rgba(31,111,235,0.3); }
+    .group-zone h5 { margin: 0 0 10px 0; color: var(--text-muted); text-align: center; font-size: 1rem; }
+    .student-pill { background: var(--card-bg); border: 1px solid var(--border); padding: 5px 12px; border-radius: 20px; font-size: 0.9rem; cursor: grab; user-select: none; transition: transform 0.1s; }
+    .student-pill:active { cursor: grabbing; transform: scale(0.95); }
+    
+    /* 極速申購面板 */
+    .buyer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 5px;}
+    .buyer-btn { background: #010409; border: 1px solid var(--border); color: var(--text-main); padding: 10px 5px; border-radius: 6px; cursor: pointer; text-align: center; font-size: 0.9rem; transition: all 0.1s; }
+    .buyer-btn:hover { background: #21262d; border-color: var(--text-muted); }
+    .buyer-btn.selected { background: var(--highlight); color: white; border-color: var(--highlight); font-weight: bold; }
+    .buyer-btn.has-trades { border-bottom: 3px solid #d29922; }
+    
+    .trade-panel { background: #010409; border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-top: 15px; display: none; }
+    .stock-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+    .stock-btn { padding: 15px; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text-main); cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: 0.2s; }
+    .stock-btn:hover { border-color: var(--highlight); background: #21262d; }
+    .stock-btn.active { background: #238636; color: white; border-color: #2ea043; }
+    
+    .amount-grid { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
+    .amount-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--border); color: white; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+    .amount-btn:hover { background: var(--highlight); border-color: var(--highlight); }
+    
+    .trade-badge { display: inline-flex; align-items: center; background: #21262d; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; margin: 2px; font-size: 0.85rem; }
+    .trade-badge span { margin-right: 5px; }
+    .trade-badge button { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 0 2px; }
+    .trade-badge button:hover { color: var(--danger); }
+
+    /* Modal 通用 */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(4px); }
+    .modal { background: var(--card-bg); border: 1px solid var(--border); padding: 30px; border-radius: 12px; max-width: 600px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.8); animation: scaleUp 0.2s; max-height: 90vh; overflow-y: auto;}
+    .modal h2 { margin-top: 0; color: #e6edf3; }
+    
+    /* 卡片圖片抽籤樣式 */
+    .card-display-container { width: 100%; max-width: 280px; aspect-ratio: 2.5 / 3.5; margin: 20px auto; border-radius: 12px; overflow: hidden; position: relative; border: 3px solid var(--border); box-shadow: 0 0 20px rgba(0,0,0,0.5); background: #010409; transition: transform 0.1s; }
+    .card-display-container.shaking { animation: shake 0.1s infinite; border-color: var(--warning); box-shadow: 0 0 30px rgba(245,158,11,0.6); }
+    .card-display-container img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .card-fallback { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; background: linear-gradient(135deg, #1c2128 0%, #0d1117 100%); }
+    .card-fallback-icon { font-size: 3rem; margin-bottom: 15px; }
+    .card-fallback-title { font-size: 1.5rem; font-weight: bold; color: var(--highlight); }
+
+    /* 學生查詢機 (Kiosk Mode) 全螢幕防呆樣式 */
+    #kiosk-mode { display: none; position: fixed; inset: 0; background: #0d1117; z-index: 9999; overflow-y: auto; padding: 40px; box-sizing: border-box; }
+    .kiosk-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 20px; margin-bottom: 30px; }
+    .kiosk-header h1 { margin: 0; font-size: 2.5rem; text-shadow: none; color: #e6edf3; }
+    .kiosk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+    .kiosk-btn { background: #161b22; border: 2px solid var(--border); color: #c9d1d9; padding: 25px 15px; border-radius: 12px; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .kiosk-btn:hover { border-color: var(--highlight); background: rgba(31,111,235,0.1); transform: translateY(-3px); }
+    .kiosk-stat-box { background: rgba(31,111,235,0.1); border: 1px solid var(--highlight); border-radius: 8px; padding: 15px; margin-top: 20px; text-align: center; }
+
+    /* QR Code 顯示區 */
+    #qrcode-display { display: flex; justify-content: center; background: white; padding: 20px; border-radius: 10px; margin: 20px auto; width: fit-content; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 25% { transform: translate(-1px, -2px) rotate(-1deg); } 50% { transform: translate(-2px, 0px) rotate(1deg); } 75% { transform: translate(2px, 2px) rotate(0deg); } 100% { transform: translate(1px, -1px) rotate(-1deg); } }
+
+    /* 頂部跑馬燈列 */
+    .top-bar { display: flex; justify-content: space-between; align-items: center; background: #010409; border: 1px solid var(--border); color: var(--text-main); padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-family: monospace; flex-wrap: wrap; gap: 10px;}
+    .top-bar .ticker { color: #58a6ff; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 10px;}
+    .top-controls { display: flex; gap: 10px; flex-wrap: wrap;}
+    
+    .sync-status { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+    .sync-status.online { background: var(--danger); } /* 紅色表示未連線 */
+    .sync-status.synced { background: var(--danger); animation: pulseGreen 2s infinite; background: var(--danger); } /* 成功連線變綠色 */
+    
+    @keyframes pulseGreen { 0% { background: #00e676; box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); } 70% { background: #00e676; box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); } 100% { background: #00e676; box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); } }
+
+</style>
+</head>
+<body>
+
+<!-- 🌐 主控台介面 -->
+<div class="container" id="main-interface">
+    <h1>📈 504班股票交易所 4.1 雲端與單機雙棲版</h1>
+    
+    <div class="top-bar">
+        <span class="ticker"><div id="sync-indicator" class="sync-status"></div> STATUS: 雲端連線偵測中...</span>
+        <div class="top-controls">
+            <button class="btn btn-warning" style="padding: 5px 15px; color:#000;" onclick="openQRModal()">📱 產生學生 QR Code</button>
+            <button class="btn btn-info" style="padding: 5px 15px;" onclick="openMarketDashboard()">📊 大盤即時看板</button>
+            <button class="btn btn-primary" style="padding: 5px 15px;" onclick="toggleKioskMode(true)">🧑‍🎓 進入查詢機</button>
+            <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.85rem;" onclick="confirmResetMonth()">🔄 重置月份</button>
+        </div>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="active" onclick="switchTab('roster')">⚙️ 名單與分組</button>
+        <button onclick="switchTab('buy')">⚡ 極速申購終端</button>
+        <button onclick="switchTab('weekly')">📊 結算走勢與抽籤</button>
+        <button onclick="switchTab('monthly')">💰 月底分紅計算</button>
+    </div>
+
+    <!-- 1. 名單設定區 -->
+    <div id="roster" class="tab-content active">
+        <div class="card">
+            <div style="display:flex; justify-content: space-between; align-items: center;">
+                <h3>班級名單與組別設定</h3>
+                <button class="btn btn-outline" onclick="openBulkEditModal()">📝 批量貼上名單</button>
+            </div>
+            <p style="color:var(--text-muted); font-size:0.9rem;">提示：請直接將學生拖曳至對應的小組內自動儲存。</p>
+            <div class="dnd-container">
+                <div>
+                    <h4>未分組名單</h4>
+                    <div id="unassigned-pool" class="dnd-pool" ondrop="drop(event, '')" ondragover="allowDrop(event)"></div>
+                </div>
+                <h4>小組分區</h4>
+                <div class="dnd-groups-grid" id="groups-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 極速股票申購區 -->
+    <div id="buy" class="tab-content">
+        <div class="card">
+            <h3>⚡ 極速申購終端</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">1. 選擇學生 ➔ 2. 選擇標的 ➔ 3. 點擊張數直接買入。</p>
+            
+            <h4>1. 選擇買家 (黃線代表已交易)</h4>
+            <div id="buyer-grid" class="buyer-grid"></div>
+
+            <div id="trade-panel" class="trade-panel">
+                <h4 style="color:#58a6ff; border-left-color: #58a6ff;">2. 正在為 <span id="current-buyer-name" style="color:white; font-size:1.2rem; margin:0 5px;">---</span> 操盤</h4>
+                <div style="font-size: 0.85rem; color:var(--text-muted); margin-bottom: 10px;">
+                    額度狀態：小組股票 (已用 <span id="quota-group" style="color:#fff;">0</span>/5) | 00504 大盤 (已用 <span id="quota-etf" style="color:#fff;">0</span>/1)
+                </div>
+                
+                <div class="stock-grid" id="fast-stock-grid">
+                    <button class="stock-btn" onclick="selectFastStock('1')">第 1 組</button>
+                    <button class="stock-btn" onclick="selectFastStock('2')">第 2 組</button>
+                    <button class="stock-btn" onclick="selectFastStock('3')">第 3 組</button>
+                    <button class="stock-btn" onclick="selectFastStock('4')">第 4 組</button>
+                    <button class="stock-btn" onclick="selectFastStock('5')">第 5 組</button>
+                    <button class="stock-btn" onclick="selectFastStock('6')">第 6 組</button>
+                    <button class="stock-btn" onclick="selectFastStock('7')">第 7 組</button>
+                    <button class="stock-btn" style="border-color:#d29922; color:#d29922;" onclick="selectFastStock('00504')">00504 ETF</button>
+                </div>
+
+                <div id="amount-selector" style="display:none; text-align:center; padding-top:10px; border-top: 1px solid var(--border);">
+                    <h5 style="margin:0 0 10px 0; color:var(--text-main);">3. 點擊張數立即下單</h5>
+                    <div class="amount-grid">
+                        <button class="amount-btn" onclick="executeFastBuy(1)">1</button>
+                        <button class="amount-btn" onclick="executeFastBuy(2)">2</button>
+                        <button class="amount-btn" onclick="executeFastBuy(3)">3</button>
+                        <button class="amount-btn" onclick="executeFastBuy(4)">4</button>
+                        <button class="amount-btn" onclick="executeFastBuy(5)">5</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h4>即時申購總表</h4>
+            <div class="table-responsive">
+                <table id="portfolio-table">
+                    <thead><tr><th>座號姓名</th><th>所屬組別</th><th>持有部位 (點擊✖撤銷)</th><th>總投入本金</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 週末結算區 -->
+    <div id="weekly" class="tab-content">
+        <div class="card">
+            <h3>📊 週末股價結算分析</h3>
+            
+            <div class="form-grid" style="grid-template-columns: 2fr 1fr;">
+                <div class="form-group">
+                    <label>大盤事件卡 (自動連動 18 張牌庫)：</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="event-card" style="flex:1;"></select>
+                        <button class="btn btn-warning" onclick="openDrawModal()">🎲 輪盤抽籤</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>00504 專屬事件：</label>
+                    <select id="etf-event-card">
+                        <option value="normal">無事件 (取7組平均)</option>
+                        <option value="change">🎲 經理人換將 (盲抽一組股價)</option>
+                        <option value="risk">💣 系統性風險 (取最後一名股價)</option>
+                    </select>
+                </div>
+            </div>
+
+            <h4>輸入各組本週總分</h4>
+            <div id="weekly-scores-grid" class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap:10px;"></div>
+            
+            <button class="btn btn-primary btn-block" onclick="previewWeeklyPrice()">🔍 運算本週走勢 (預覽)</button>
+        </div>
+
+        <div class="card" id="weekly-preview-card" style="display: none;">
+            <h4>本週股價變動排行 (依總分排序)</h4>
+            <div class="table-responsive">
+                <table id="price-table">
+                    <thead><tr><th>名次</th><th>組別</th><th>本週總分</th><th>原股價</th><th>漲跌幅</th><th>最新股價</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button class="btn btn-success btn-block" style="margin-top: 20px;" onclick="confirmWeeklyApply()">✅ 確認收盤 (儲存紀錄)</button>
+        </div>
+    </div>
+
+    <!-- 4. 月底分紅區 -->
+    <div id="monthly" class="tab-content">
+        <div class="card">
+            <h3>💰 月底獲利大結算</h3>
+            <div class="form-group" style="margin-bottom: 20px; background: rgba(210,153,34,0.1); padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color:#e6edf3; margin:0;">
+                    <input type="checkbox" id="bumper-harvest" style="width: 20px; height: 20px;">
+                    🎉 啟動「大豐收」事件 (僅持有 00504 者，每張 ETF 額外獲得 $1000 股息)
+                </label>
+            </div>
+            <h4>輸入各組【本月累計總分】(結算股息用)</h4>
+            <div id="monthly-scores-grid" class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap:10px;"></div>
+            <button class="btn btn-primary btn-block" onclick="calculateMonthly()">💻 執行運算並產出報表</button>
+        </div>
+
+        <div class="card" id="monthly-result-card" style="display: none;">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h4 style="margin:0;">個人結算報表</h4>
+                <button class="btn btn-outline" onclick="exportCSV()">📊 匯出 CSV</button>
+            </div>
+            <div class="table-responsive">
+                <table id="final-table">
+                    <thead><tr><th>座號</th><th>姓名</th><th>退還本利和</th><th>領取股息</th><th>經營獎金</th><th>👑 總拿回金額</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= 🧑‍🎓 學生查詢機 (Kiosk Mode) 全螢幕介面 ================= -->
+<div id="kiosk-mode">
+    <div class="kiosk-header">
+        <h1>🧑‍🎓 個人資產庫存查詢</h1>
+        <!-- 若是由 QR Code 掃描進入，此按鈕會被隱藏，防止學生跳脫 -->
+        <button id="kiosk-exit-btn" class="btn btn-outline" style="background:#0d1117; color:#58a6ff; border-color:#58a6ff;" onclick="toggleKioskMode(false)">🔙 關閉並返回主控台</button>
+    </div>
+    <p style="color:var(--text-muted); font-size:1.1rem; text-align:center; margin-bottom: 30px;">請點擊您的姓名，查看您目前的證券帳戶與未實現損益。</p>
+    <div class="kiosk-grid" id="kiosk-student-grid">
+        <!-- 動態產生學生按鈕 -->
+    </div>
+</div>
+
+<!-- ================= 彈跳視窗區 (Modals) ================= -->
+
+<!-- QR Code 產生 Modal -->
+<div class="modal-overlay" id="qr-modal">
+    <div class="modal" style="text-align:center;">
+        <h2 style="color:var(--warning);">📱 學生自助掃描區</h2>
+        <p style="color:var(--text-muted);">請學生使用平板掃描下方 QR Code，即會自動進入「個人庫存查詢畫面」。</p>
+        <div id="qrcode-display"></div>
+        <button class="btn btn-outline btn-block" style="margin-top:20px;" onclick="closeModal('qr-modal')">關閉</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="bulk-edit-modal">
+    <div class="modal">
+        <h2>批量貼上名單</h2>
+        <p style="color:var(--text-muted); font-size:0.9rem;">每行一個名字，系統將自動依序分配為 1~27 號。</p>
+        <textarea id="bulk-names-input" rows="12" style="width: 100%; box-sizing: border-box; resize: vertical; margin-bottom: 15px;"></textarea>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="saveBulkNames()">💾 儲存名單</button>
+            <button class="btn btn-outline" style="flex:1;" onclick="closeModal('bulk-edit-modal')">取消</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="dashboard-modal">
+    <div class="modal" style="max-width: 700px;">
+        <h2 style="color:var(--warning);">📈 交易所大盤行情</h2>
+        <p style="color:var(--text-muted);">顯示各標的目前最新股價與「前一週」結算的漲跌點數。</p>
+        <div class="table-responsive">
+            <table id="dashboard-table">
+                <thead><tr><th>股票標的</th><th>前週漲跌點數</th><th>即時現價</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <button class="btn btn-outline btn-block" style="margin-top:20px;" onclick="closeModal('dashboard-modal')">關閉看板</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="student-portfolio-modal" style="z-index: 10000;">
+    <div class="modal" style="max-width: 600px;">
+        <h2 id="sp-name" style="color:var(--highlight); text-align:center;">姓名</h2>
+        <div class="table-responsive">
+            <table id="sp-table">
+                <thead><tr><th>持有標的</th><th>張數</th><th>購入成本</th><th>目前現值</th><th>未實現損益</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="kiosk-stat-box">
+            <h3 style="margin:0 0 10px 0; color:#e6edf3;">資產總覽</h3>
+            <div style="display:flex; justify-content: space-around; font-size:1.1rem;">
+                <div>總投入成本<br><b id="sp-cost" style="color:var(--text-muted);">0</b></div>
+                <div>目前總市值<br><b id="sp-value" style="color:white;">0</b></div>
+                <div>總報酬率<br><b id="sp-roi">0%</b></div>
+            </div>
+        </div>
+        <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="closeModal('student-portfolio-modal')">確認並離開</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="draw-modal">
+    <div class="modal" style="text-align:center; max-width: 450px;">
+        <h2>🃏 命運事件卡</h2>
+        
+        <div id="card-display-container" class="card-display-container">
+            <img id="card-img-display" src="" alt="事件卡">
+            <div id="card-fallback" class="card-fallback">
+                <div class="card-fallback-icon">❓</div>
+                <div id="card-fallback-title" class="card-fallback-title">準備抽卡</div>
+            </div>
+        </div>
+
+        <button id="draw-btn" class="btn btn-warning btn-block" style="font-size:1.2rem; padding:15px;" onclick="startDraw()">🎰 開始抽卡</button>
+        <button id="close-draw-btn" class="btn btn-outline btn-block" style="margin-top:10px;" onclick="closeModal('draw-modal')">關閉</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="custom-modal" style="z-index: 10001;">
+    <div class="modal" style="text-align:center; max-width:400px;">
+        <h2 id="modal-title">提示訊息</h2>
+        <p id="modal-desc" style="margin-bottom: 25px;"></p>
+        <button class="btn btn-primary" onclick="closeModal('custom-modal')" style="min-width: 120px;">確定</button>
+    </div>
+</div>
+
+<!-- ================= Firebase 雲端核心邏輯與 JS ================= -->
+<script type="module">
+    // --- 👇 老師專屬的 Firebase Config (已設定完成) ---
+    const MY_GITHUB_FIREBASE_CONFIG = {
+        apiKey: "AIzaSyDJFzG3RrCkJBx5B23lBVcoOHmaqZ2dAYA", 
+        authDomain: "forgemini-7349a.firebaseapp.com",
+        projectId: "forgemini-7349a",
+        storageBucket: "forgemini-7349a.firebasestorage.app",
+        messagingSenderId: "865250968546",
+        appId: "1:865250968546:web:fc3ded71179b709d422fbb"
+    };
+    // ------------------------------------------------------------------------------------------
+
+    let firebaseConfig = MY_GITHUB_FIREBASE_CONFIG;
+    let appIdStr = '504-stock-exchange';
+    try {
+        if (typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config);
+        if (typeof __app_id !== 'undefined') appIdStr = __app_id;
+    } catch (e) { console.warn("Using fallback config."); }
+
+    // --- 🃏 【18張事件卡設定區】 ---
+    const ALL_18_CARDS = [
+        { id: 1, name: '大牛市來襲', effect: 'bull', img: './cards/1.jpg' },
+        { id: 2, name: '大熊市來襲', effect: 'bear', img: './cards/2.jpg' },
+        { id: 3, name: '國安基金護盤', effect: 'nsf', img: './cards/3.jpg' },
+        { id: 4, name: '熱錢湧入', effect: 'hot', img: './cards/4.jpg' },
+        { id: 5, name: '經濟通縮', effect: 'deflation', img: './cards/5.jpg' },
+        { id: 6, name: '資金集中', effect: 'concentrate', img: './cards/6.jpg' },
+        { id: 7, name: '市場觀望', effect: 'wait', img: './cards/7.jpg' },
+        { id: 8, name: '證交稅徵收', effect: 'tax', img: './cards/8.jpg' },
+        { id: 9, name: '公衛危機', effect: 'narrative', img: './cards/9.jpg' }, 
+        { id: 10, name: '產業大升級', effect: 'narrative', img: './cards/10.jpg' },
+        { id: 11, name: '企業發大財', effect: 'narrative', img: './cards/11.jpg' },
+        { id: 12, name: '天災打擊', effect: 'narrative', img: './cards/12.jpg' },
+        { id: 13, name: '財報超預期', effect: 'narrative', img: './cards/13.jpg' },
+        { id: 14, name: '財報大暴雷', effect: 'narrative', img: './cards/14.jpg' },
+        { id: 15, name: '外資大舉買進', effect: 'narrative', img: './cards/15.jpg' },
+        { id: 16, name: '外資無情拋售', effect: 'narrative', img: './cards/16.jpg' },
+        { id: 17, name: '央行降息', effect: 'narrative', img: './cards/17.jpg' },
+        { id: 18, name: '央行升息', effect: 'narrative', img: './cards/18.jpg' }
+    ];
+
+    const MAX_STUDENTS = 27;
+    const GROUPS_COUNT = 7;
+    const INITIAL_PRICE = 2000;
+
+    window.db = {
+        students: [], stockPrices: {}, lastWeekChanges: {}, transactions: []
+    };
+
+    let firestoreDb;
+    let auth;
+    let fsDoc, fsSetDoc, fsOnSnapshot; // 儲存雲端連線的函式
+
+    // 將 UI 操作綁定至 window
+    window.switchTab = function(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-tabs button').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+        if (tabId === 'buy') renderFastBuyerGrid(); 
+    };
+
+    window.showModal = function(title, desc) {
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-desc').innerText = desc;
+        document.getElementById('custom-modal').style.display = 'flex';
+    };
+
+    window.closeModal = function(modalId) { document.getElementById(modalId).style.display = 'none'; };
+    window.formatMoney = function(num) { return '$' + num.toLocaleString('en-US'); };
+    window.getStockName = function(stockId) { return stockId === '00504' ? '00504 大盤' : `第${stockId}組`; };
+
+    window.openMarketDashboard = function() {
+        const tbody = document.querySelector('#dashboard-table tbody');
+        tbody.innerHTML = '';
+        const keys = ['1','2','3','4','5','6','7','00504'];
+        keys.forEach(k => {
+            let price = window.db.stockPrices[k] || INITIAL_PRICE;
+            let change = window.db.lastWeekChanges[k] || 0;
+            let changeStr = change === 0 ? '<span class="text-neutral">— 0</span>' : (change > 0 ? `<span class="text-up">▲ +${change}</span>` : `<span class="text-down">▼ ${change}</span>`); 
+            tbody.innerHTML += `<tr><td style="font-weight:bold;">${getStockName(k)}</td><td>${changeStr}</td><td style="font-size:1.2rem; color:var(--highlight); font-weight:bold;">${price}</td></tr>`;
+        });
+        document.getElementById('dashboard-modal').style.display = 'flex';
+    };
+
+    window.openQRModal = function() {
+        const qrContainer = document.getElementById("qrcode-display");
+        qrContainer.innerHTML = ""; 
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('mode', 'kiosk'); 
+        new QRCode(qrContainer, { text: currentUrl.toString(), width: 220, height: 220, colorDark : "#0d1117", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
+        document.getElementById('qr-modal').style.display = 'flex';
+    };
+
+    window.toggleKioskMode = function(isActive) {
+        if (isActive) {
+            document.getElementById('main-interface').style.display = 'none';
+            document.getElementById('kiosk-mode').style.display = 'block';
+            renderKioskGrid();
+        } else {
+            document.getElementById('kiosk-mode').style.display = 'none';
+            document.getElementById('main-interface').style.display = 'block';
+        }
+    };
+
+    function renderKioskGrid() {
+        const grid = document.getElementById('kiosk-student-grid');
+        grid.innerHTML = '';
+        window.db.students.filter(s => s.name !== '').forEach(st => {
+            const btn = document.createElement('div');
+            btn.className = 'kiosk-btn';
+            btn.innerText = `${st.id}. ${st.name}`;
+            btn.onclick = () => window.openStudentPortfolio(st.id);
+            grid.appendChild(btn);
+        });
+    }
+
+    window.openStudentPortfolio = function(studentId) {
+        const st = window.db.students.find(s => s.id === studentId);
+        document.getElementById('sp-name').innerText = `📊 ${st.id}號 ${st.name} 的投資組合`;
+        const myTxs = window.db.transactions.filter(t => t.studentId === studentId);
+        const tbody = document.querySelector('#sp-table tbody');
+        tbody.innerHTML = '';
+        let totalCost = 0; let totalValue = 0;
+
+        if (myTxs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-muted);">目前尚未申購任何股票</td></tr>';
+        } else {
+            myTxs.forEach(tx => {
+                let cost = tx.amount * INITIAL_PRICE;
+                let currentPrice = window.db.stockPrices[tx.stockId];
+                let value = tx.amount * currentPrice;
+                let profit = value - cost;
+                
+                totalCost += cost; totalValue += value;
+                let profitStr = profit === 0 ? '<span class="text-neutral">0</span>' : (profit > 0 ? `<span class="text-up">▲ +${profit}</span>` : `<span class="text-down">▼ ${profit}</span>`);
+                tbody.innerHTML += `<tr><td style="font-weight:bold;">${getStockName(tx.stockId)}</td><td>${tx.amount}</td><td>${cost}</td><td style="color:#fff;">${value}</td><td>${profitStr}</td></tr>`;
+            });
+        }
+        document.getElementById('sp-cost').innerText = formatMoney(totalCost);
+        document.getElementById('sp-value').innerText = formatMoney(totalValue);
+        let roi = totalCost > 0 ? ((totalValue - totalCost) / totalCost * 100).toFixed(1) : 0;
+        let roiEl = document.getElementById('sp-roi');
+        roiEl.innerText = `${roi > 0 ? '+' : ''}${roi}%`;
+        roiEl.className = roi > 0 ? 'text-up' : (roi < 0 ? 'text-down' : 'text-neutral');
+        document.getElementById('student-portfolio-modal').style.display = 'flex';
+    };
+
+    // --- 🃏 抽籤系統 ---
+    let drawInterval;
+    window.openDrawModal = function() {
+        const imgEl = document.getElementById('card-img-display');
+        const fallbackEl = document.getElementById('card-fallback');
+        const container = document.getElementById('card-display-container');
+        imgEl.style.display = 'none'; fallbackEl.style.display = 'flex';
+        document.getElementById('card-fallback-icon').innerText = '❓';
+        document.getElementById('card-fallback-title').innerText = "準備抽卡";
+        container.classList.remove('shaking');
+        document.getElementById('draw-btn').style.display = 'block';
+        document.getElementById('close-draw-btn').style.display = 'block';
+        document.getElementById('draw-modal').style.display = 'flex';
+    };
+
+    function renderCardToDisplay(card) {
+        const imgEl = document.getElementById('card-img-display');
+        const fallbackEl = document.getElementById('card-fallback');
+        imgEl.style.display = 'none'; fallbackEl.style.display = 'flex';
+        document.getElementById('card-fallback-icon').innerText = '🃏';
+        document.getElementById('card-fallback-title').innerText = card.name;
+        imgEl.src = card.img;
+        imgEl.onload = () => { imgEl.style.display = 'block'; fallbackEl.style.display = 'none'; };
+    }
+
+    window.startDraw = function() {
+        document.getElementById('draw-btn').style.display = 'none';
+        document.getElementById('close-draw-btn').style.display = 'none';
+        const container = document.getElementById('card-display-container');
+        container.classList.add('shaking');
+        
+        let counter = 0; let speed = 80; 
+        drawInterval = setInterval(() => {
+            let randCard = ALL_18_CARDS[Math.floor(Math.random() * ALL_18_CARDS.length)];
+            renderCardToDisplay(randCard);
+            counter += speed;
+            if (counter >= 2500) {
+                clearInterval(drawInterval);
+                container.classList.remove('shaking');
+                let finalCard = ALL_18_CARDS[Math.floor(Math.random() * ALL_18_CARDS.length)];
+                renderCardToDisplay(finalCard);
+                document.getElementById('event-card').value = finalCard.effect;
+                setTimeout(() => { document.getElementById('close-draw-btn').style.display = 'block'; }, 1000);
+            }
+        }, speed);
+    };
+
+    // --- 其他邏輯 ---
+    function renderRosterDND() {
+        const unassignedPool = document.getElementById('unassigned-pool');
+        const groupsGrid = document.getElementById('groups-grid');
+        unassignedPool.innerHTML = ''; groupsGrid.innerHTML = '';
+        for (let i = 1; i <= 7; i++) groupsGrid.innerHTML += `<div class="group-zone" id="zone-${i}" ondrop="drop(event, '${i}')" ondragover="allowDrop(event)"><h5>第 ${i} 組</h5></div>`;
+        window.db.students.forEach(st => {
+            if (!st.name) return;
+            const pill = document.createElement('div');
+            pill.className = 'student-pill'; pill.draggable = true; pill.id = `stu-${st.id}`; pill.innerText = `${st.id}. ${st.name}`;
+            pill.ondragstart = window.drag;
+            if (st.group && st.group !== '') {
+                const zone = document.getElementById(`zone-${st.group}`);
+                if (zone) zone.appendChild(pill);
+            } else unassignedPool.appendChild(pill);
+        });
+    }
+    window.allowDrop = function(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); };
+    window.drag = function(ev) { ev.dataTransfer.setData("text", ev.target.id); };
+    window.drop = function(ev, groupId) {
+        ev.preventDefault();
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        const studentId = ev.dataTransfer.getData("text").replace('stu-', '');
+        let student = window.db.students.find(s => s.id === studentId);
+        if (student) { student.group = groupId; window.saveDataToCloud(); }
+    };
+    document.addEventListener('dragleave', function(ev) { if (ev.target.classList && ev.target.classList.contains('drag-over')) ev.target.classList.remove('drag-over'); });
+
+    window.openBulkEditModal = function() {
+        document.getElementById('bulk-names-input').value = window.db.students.map(s => s.name).join('\n');
+        document.getElementById('bulk-edit-modal').style.display = 'flex';
+    };
+    window.saveBulkNames = function() {
+        const lines = document.getElementById('bulk-names-input').value.split('\n');
+        for (let i = 0; i < MAX_STUDENTS; i++) {
+            let name = lines[i] ? lines[i].trim() : '';
+            window.db.students[i].name = name;
+            if(name === '') window.db.students[i].group = ''; 
+        }
+        window.saveDataToCloud(); window.closeModal('bulk-edit-modal');
+    };
+
+    let currentFastBuyerId = null; let currentFastStockId = null;
+    function renderFastBuyerGrid() {
+        const grid = document.getElementById('buyer-grid');
+        grid.innerHTML = '';
+        window.db.students.filter(s => s.name !== '').forEach(st => {
+            const hasTrades = window.db.transactions.some(t => t.studentId === st.id);
+            const btn = document.createElement('button');
+            btn.className = `buyer-btn ${hasTrades ? 'has-trades' : ''} ${currentFastBuyerId === st.id ? 'selected' : ''}`;
+            btn.innerText = `${st.id}. ${st.name}`;
+            btn.onclick = () => window.selectFastBuyer(st.id, btn);
+            grid.appendChild(btn);
+        });
+    }
+    window.selectFastBuyer = function(studentId, btnElement) {
+        currentFastBuyerId = studentId; currentFastStockId = null;
+        document.querySelectorAll('.buyer-btn').forEach(b => b.classList.remove('selected'));
+        if(btnElement) btnElement.classList.add('selected');
+        const st = window.db.students.find(s => s.id === studentId);
+        document.getElementById('current-buyer-name').innerText = `${st.id}號 ${st.name}`;
+        document.querySelectorAll('.stock-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('amount-selector').style.display = 'none';
+        document.getElementById('trade-panel').style.display = 'block';
+        updateQuotaDisplay();
+    };
+    function updateQuotaDisplay() {
+        if (!currentFastBuyerId) return;
+        const myTxs = window.db.transactions.filter(t => t.studentId === currentFastBuyerId);
+        const groupShares = myTxs.filter(t => t.stockId !== '00504').reduce((sum, t) => sum + t.amount, 0);
+        const etfShares = myTxs.filter(t => t.stockId === '00504').reduce((sum, t) => sum + t.amount, 0);
+        document.getElementById('quota-group').innerText = groupShares;
+        document.getElementById('quota-group').style.color = groupShares >= 5 ? 'var(--success)' : '#fff';
+        document.getElementById('quota-etf').innerText = etfShares;
+        document.getElementById('quota-etf').style.color = etfShares >= 1 ? 'var(--success)' : '#fff';
+    }
+    window.selectFastStock = function(stockId) {
+        if (!currentFastBuyerId) return;
+        currentFastStockId = stockId;
+        const btns = document.querySelectorAll('.stock-btn');
+        btns.forEach(b => b.classList.remove('active'));
+        const targetBtn = Array.from(btns).find(b => { return stockId === '00504' ? b.innerText.includes('00504') : b.innerText.includes(`第 ${stockId} 組`); });
+        if (targetBtn) targetBtn.classList.add('active');
+        document.getElementById('amount-selector').style.display = 'block';
+    };
+    window.executeFastBuy = function(amount) {
+        if (!currentFastBuyerId || !currentFastStockId) return;
+        const student = window.db.students.find(s => s.id === currentFastBuyerId);
+        if (!student.group) return window.showModal('申購失敗', '該學生尚未分配組別，無法進行交易！');
+        if (student.group === currentFastStockId) return window.showModal('規則限制', '法規禁止申購自己所屬組別的股票！');
+        const myTxs = window.db.transactions.filter(t => t.studentId === currentFastBuyerId);
+        const currentGroupShares = myTxs.filter(t => t.stockId !== '00504').reduce((sum, t) => sum + t.amount, 0);
+        const currentETFShares = myTxs.filter(t => t.stockId === '00504').reduce((sum, t) => sum + t.amount, 0);
+        if (currentFastStockId === '00504') { if (currentETFShares + amount > 1) return window.showModal('額度不足', '每人每月最多只能申購 1 張 00504 ETF。'); } 
+        else { if (currentGroupShares + amount > 5) return window.showModal('額度不足', `每人每月最多申購 5 張小組股票（目前已申購 ${currentGroupShares} 張）。`); }
+        
+        window.db.transactions.push({ studentId: currentFastBuyerId, stockId: currentFastStockId, amount: amount, priceBought: INITIAL_PRICE });
+        window.saveDataToCloud(); 
+        document.querySelectorAll('.stock-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('amount-selector').style.display = 'none';
+        currentFastStockId = null;
+    };
+    function renderTransactionsMerged() {
+        const tbody = document.querySelector('#portfolio-table tbody');
+        tbody.innerHTML = '';
+        window.db.students.filter(s => s.name !== '').forEach(st => {
+            const myTxs = window.db.transactions.filter(t => t.studentId === st.id);
+            if (myTxs.length === 0) return;
+            let badges = ''; let totalInvested = 0;
+            myTxs.forEach((tx) => {
+                totalInvested += (tx.amount * INITIAL_PRICE);
+                badges += `<span class="trade-badge"><span>${getStockName(tx.stockId)} x${tx.amount}</span><button title="撤銷" onclick="deleteTxMerged('${st.id}', '${tx.stockId}')">✖</button></span>`;
+            });
+            tbody.innerHTML += `<tr><td>${st.id}. ${st.name}</td><td style="color:var(--text-muted);">第 ${st.group} 組</td><td style="text-align:left; max-width:300px; white-space:normal;">${badges}</td><td style="font-weight:bold;">${formatMoney(totalInvested)}</td></tr>`;
+        });
+    }
+    window.deleteTxMerged = function(studentId, stockId) {
+        window.db.transactions = window.db.transactions.filter(t => !(t.studentId === studentId && t.stockId === stockId));
+        window.saveDataToCloud(); 
+    };
+
+    function renderScoreInputs(containerId, inputClass) {
+        const container = document.getElementById(containerId); container.innerHTML = '';
+        for (let i = 1; i <= 7; i++) container.innerHTML += `<div class="form-group"><label>第 ${i} 組總分：</label><input type="number" class="${inputClass}" data-group="${i}" placeholder="..."></div>`;
+    }
+    let tempNewPrices = {}; let tempChanges = {}; 
+
+    window.previewWeeklyPrice = function() {
+        const inputs = document.querySelectorAll('.weekly-score');
+        let groupScores = []; let missing = false;
+        inputs.forEach(input => {
+            const score = parseInt(input.value);
+            if (isNaN(score)) missing = true;
+            groupScores.push({ id: input.getAttribute('data-group'), score: score, currentPrice: window.db.stockPrices[input.getAttribute('data-group')] });
+        });
+        if (missing) return window.showModal('資料未齊', '請完整填寫 1~7 組的分數才能進行大盤運算。');
+
+        const event = document.getElementById('event-card').value;
+        const etfEvent = document.getElementById('etf-event-card').value;
+        
+        let sortedScores = [...groupScores].sort((a, b) => b.score - a.score);
+        let baselineIndex = 3; 
+        if (event === 'bull') baselineIndex = 5; if (event === 'bear') baselineIndex = 1; 
+        let baselineScore = sortedScores[baselineIndex].score;
+        let upMultiplier = event === 'hot' ? 100 : 50; let downMultiplier = event === 'deflation' ? 100 : 50;
+        let maxUpCap = 500; if (event === 'hot') maxUpCap = 1000; if (event === 'wait') maxUpCap = 300;
+        let maxDownCap = -500; if (event === 'deflation') maxDownCap = -1000; if (event === 'wait') maxDownCap = -300;
+        if (event === 'nsf') maxDownCap = 0; 
+
+        let calcMap = {};
+        groupScores.forEach(group => {
+            let scoreDiff = group.score - baselineScore;
+            let priceChange = 0;
+            if (scoreDiff > 0) priceChange = Math.min(scoreDiff * upMultiplier, maxUpCap);
+            else if (scoreDiff < 0) priceChange = Math.max(scoreDiff * downMultiplier, maxDownCap);
+            if (event === 'concentrate') {
+                let rank = sortedScores.findIndex(s => s.id === group.id) + 1;
+                if (rank > 2 && priceChange > 0) priceChange = 0;
+            }
+            let newPrice = group.currentPrice + priceChange;
+            let taxDeducted = false;
+            if (event === 'tax' && priceChange > 0) { newPrice -= 200; taxDeducted = true; priceChange -= 200; } 
+            calcMap[group.id] = { newPrice, priceChange, scoreDiff, taxDeducted, currentPrice: group.currentPrice };
+        });
+
+        tempNewPrices = {}; tempChanges = {}; let resultRows = [];
+        sortedScores.forEach((group, index) => {
+            let data = calcMap[group.id];
+            tempNewPrices[group.id] = data.newPrice; tempChanges[group.id] = data.priceChange;
+            let changeClass = data.priceChange > 0 ? 'text-up' : (data.priceChange < 0 ? 'text-down' : 'text-neutral');
+            let changeSymbol = data.priceChange > 0 ? '▲ +' : (data.priceChange < 0 ? '▼ -' : '— ');
+            let taxNote = data.taxDeducted ? ' <span style="font-size:0.8rem;color:var(--warning);">(含稅)</span>' : '';
+            let rankBadge = `${index + 1}`;
+            if(index===0) rankBadge = '🥇 1'; if(index===1) rankBadge = '🥈 2'; if(index===2) rankBadge = '🥉 3';
+            resultRows.push(`<tr><td style="font-weight:bold;">${rankBadge}</td><td>第 ${group.id} 組</td><td>${group.score} <small style="color:var(--text-muted)">(距基準${data.scoreDiff > 0 ? '+'+data.scoreDiff : data.scoreDiff})</small></td><td>${data.currentPrice}</td><td class="${changeClass}">${changeSymbol}${Math.abs(data.priceChange)}${taxNote}</td><td style="font-weight:bold; font-size:1.1rem; color: #fff;">${data.newPrice}</td></tr>`);
+        });
+
+        let etfCurrent = window.db.stockPrices['00504']; let etfNewPrice = 0; let etfNote = "";
+        if (etfEvent === 'change') { let randomId = Math.floor(Math.random() * 7) + 1; etfNewPrice = tempNewPrices[randomId.toString()]; etfNote = `換將盲抽 (抽中第 ${randomId} 組)`; } 
+        else if (etfEvent === 'risk') { let lastGroup = sortedScores[6]; etfNewPrice = tempNewPrices[lastGroup.id]; etfNote = `系統風險 (最後一名)`; } 
+        else { let sum = Object.keys(tempNewPrices).reduce((acc, val) => acc + tempNewPrices[val], 0); etfNewPrice = Math.round(sum / 7); etfNote = `追蹤大盤 (7組平均價)`; }
+
+        tempNewPrices['00504'] = etfNewPrice; let etfChange = etfNewPrice - etfCurrent; tempChanges['00504'] = etfChange;
+        let etfChangeClass = etfChange > 0 ? 'text-up' : (etfChange < 0 ? 'text-down' : 'text-neutral');
+        let etfChangeSymbol = etfChange > 0 ? '▲ +' : (etfChange < 0 ? '▼ -' : '— ');
+        resultRows.push(`<tr style="background: rgba(210,153,34,0.1); border-top: 2px solid #d29922;"><td>🎯 <strong>ETF</strong></td><td style="color:#d29922; font-weight:bold;">00504</td><td style="color:var(--text-muted); font-size:0.85rem;">${etfNote}</td><td>${etfCurrent}</td><td class="${etfChangeClass}">${etfChangeSymbol}${Math.abs(etfChange)}</td><td style="font-weight:bold; font-size:1.1rem; color: #d29922;">${etfNewPrice}</td></tr>`);
+
+        document.querySelector('#price-table tbody').innerHTML = resultRows.join('');
+        document.getElementById('weekly-preview-card').style.display = 'block';
+    };
+
+    window.confirmWeeklyApply = function() {
+        window.db.stockPrices = { ...tempNewPrices }; window.db.lastWeekChanges = { ...tempChanges }; 
+        window.saveDataToCloud();
+        document.querySelectorAll('.weekly-score').forEach(input => input.value = '');
+        document.getElementById('weekly-preview-card').style.display = 'none';
+        window.showModal('收盤完成', '最新股價與歷史漲跌點數已同步！');
+    };
+
+    window.calculateMonthly = function() {
+        const inputs = document.querySelectorAll('.monthly-score'); let monthlyScores = {}; let missing = false;
+        inputs.forEach(input => { const score = parseInt(input.value); if (isNaN(score)) missing = true; monthlyScores[input.getAttribute('data-group')] = score; });
+        if (missing) return window.showModal('資料未齊', '請填寫完整 7 組的【本月累計總分】。');
+        const isBumperHarvest = document.getElementById('bumper-harvest').checked;
+        let groupDividends = {}; let groupBonusPool = {}; let sumDividend = 0;
+        for (let i = 1; i <= 7; i++) { let id = i.toString(); let div = monthlyScores[id] * 3; groupDividends[id] = div; sumDividend += div; groupBonusPool[id] = 0; }
+        groupDividends['00504'] = Math.round(sumDividend / 7);
+        if (isBumperHarvest) groupDividends['00504'] += 1000;
+        window.db.transactions.forEach(tx => { if (tx.stockId !== '00504') groupBonusPool[tx.stockId] += (tx.amount * INITIAL_PRICE); });
+        let finalResults = [];
+        window.db.students.filter(st => st.name !== '').forEach(student => {
+            let totalPrincipalAndProfit = 0; let totalDividend = 0;
+            let myTx = window.db.transactions.filter(t => t.studentId === student.id);
+            myTx.forEach(tx => {
+                let finalPrice = window.db.stockPrices[tx.stockId];
+                totalPrincipalAndProfit += (finalPrice * tx.amount);
+                totalDividend += (groupDividends[tx.stockId] * tx.amount);
+            });
+            let managementBonus = 0;
+            if (student.group) { let pool = groupBonusPool[student.group.toString()] || 0; managementBonus = Math.round((pool * 0.1) / 4); }
+            finalResults.push({ id: student.id, name: student.name, group: student.group || '無', pp: totalPrincipalAndProfit, div: totalDividend, bonus: managementBonus, total: totalPrincipalAndProfit + totalDividend + managementBonus });
+        });
+        let resultRows = finalResults.map(r => `<tr><td>${r.id}</td><td>${r.name} <span style="color:var(--text-muted); font-size:0.8rem;">(第${r.group}組)</span></td><td>${window.formatMoney(r.pp)}</td><td style="color:var(--success); font-weight:bold;">${window.formatMoney(r.div)}</td><td style="color:var(--warning); font-weight:bold;">${window.formatMoney(r.bonus)}</td><td style="font-weight:bold; font-size:1.15rem; color:#58a6ff; background: rgba(88,166,255,0.1);">${window.formatMoney(r.total)}</td></tr>`);
+        document.querySelector('#final-table tbody').innerHTML = resultRows.join('');
+        document.getElementById('monthly-result-card').style.display = 'block';
+    };
+
+    window.exportCSV = function() {
+        let table = document.getElementById("final-table"); let rows = table.querySelectorAll("tr"); let csv = []; let BOM = "\uFEFF"; 
+        for (let i = 0; i < rows.length; i++) {
+            let row = [], cols = rows[i].querySelectorAll("td, th");
+            for (let j = 0; j < cols.length; j++) { let text = cols[j].innerText.replace(/\n|\r/g, '').replace(/\$|,/g, ''); row.push(`"${text}"`); }
+            csv.push(row.join(","));
+        }
+        let csvFile = new Blob([BOM + csv.join("\n")], {type: "text/csv;charset=utf-8;"});
+        let downloadLink = document.createElement("a"); let dateStr = new Date().toISOString().split('T')[0];
+        downloadLink.download = `504班股票結算報表_${dateStr}.csv`;
+        downloadLink.href = window.URL.createObjectURL(csvFile); downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink); downloadLink.click(); document.body.removeChild(downloadLink);
+    };
+
+    window.confirmResetMonth = function() {
+        if (confirm("⚠️ 警告：這將會清除所有的申購紀錄，並將所有股價重置為 $2000。\n（學生名單與分組會保留）\n\n確定要開啟新月份嗎？")) {
+            for (let i = 1; i <= GROUPS_COUNT; i++) { window.db.stockPrices[i.toString()] = INITIAL_PRICE; window.db.lastWeekChanges[i.toString()] = 0; }
+            window.db.stockPrices['00504'] = INITIAL_PRICE; window.db.lastWeekChanges['00504'] = 0; window.db.transactions = [];
+            window.saveDataToCloud();
+            document.getElementById('monthly-result-card').style.display = 'none';
+            document.querySelectorAll('.monthly-score').forEach(i => i.value = '');
+            window.showModal('系統重置', '新月份已開啟！交易紀錄已清空，大盤回歸起始點。');
+        }
+    };
+
+    // --- Firebase 初始化區塊 (採用動態載入防呆設計) ---
+    function initializeEmptyDb() {
+        window.db = { students: [], stockPrices: {}, lastWeekChanges: {}, transactions: [] };
+        for (let i = 1; i <= MAX_STUDENTS; i++) window.db.students.push({ id: i.toString(), name: '', group: '' });
+        for (let i = 1; i <= GROUPS_COUNT; i++) { window.db.stockPrices[i.toString()] = INITIAL_PRICE; window.db.lastWeekChanges[i.toString()] = 0; }
+        window.db.stockPrices['00504'] = INITIAL_PRICE; window.db.lastWeekChanges['00504'] = 0;
+    }
+
+    function loadOfflineData() {
+        const stored = localStorage.getItem('504_stock_exchange_v4');
+        if (stored) window.db = JSON.parse(stored);
+        else initializeEmptyDb();
+        updateAllUI();
+    }
+
+    function updateAllUI() {
+        renderRosterDND();
+        renderFastBuyerGrid();
+        renderTransactionsMerged();
+        if (document.getElementById('kiosk-mode').style.display === 'block') renderKioskGrid();
+        if (currentFastBuyerId) updateQuotaDisplay();
+    }
+
+    function setupRealtimeSync() {
+        if (!auth || !auth.currentUser || !fsDoc || !fsOnSnapshot) return;
+        const docRef = fsDoc(firestoreDb, 'artifacts', appIdStr, 'public', 'data', 'exchangeData', 'main');
+
+        fsOnSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                window.db = docSnap.data();
+                document.getElementById('sync-indicator').classList.add('synced'); 
+                document.getElementById('sync-indicator').nextSibling.textContent = ' STATUS: 雲端即時同步中 (Online)';
+                updateAllUI();
+            } else {
+                initializeEmptyDb();
+                window.saveDataToCloud();
+            }
+        }, (error) => {
+            console.error("雲端連線異常:", error);
+            document.getElementById('sync-indicator').classList.remove('synced');
+        });
+    }
+
+    window.saveDataToCloud = async function() {
+        localStorage.setItem('504_stock_exchange_v4', JSON.stringify(window.db));
+        if (auth && auth.currentUser && fsDoc && fsSetDoc) {
+            try {
+                const docRef = fsDoc(firestoreDb, 'artifacts', appIdStr, 'public', 'data', 'exchangeData', 'main');
+                await fsSetDoc(docRef, window.db);
+            } catch (e) { console.error("同步失敗", e); }
+        }
+        updateAllUI();
+    }
+
+    async function initApp() {
+        // UI 初始化
+        const select = document.getElementById('event-card');
+        select.innerHTML = '';
+        ALL_18_CARDS.forEach(c => { select.innerHTML += `<option value="${c.effect}">${c.name}</option>`; });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'kiosk') {
+            window.isStrictKiosk = true;
+            document.getElementById('kiosk-exit-btn').style.display = 'none'; 
+            window.toggleKioskMode(true);
+        }
+
+        // 核心：動態載入 Firebase (解決本機雙擊開啟的模組阻擋問題)
+        try {
+            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+            const { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+            const { getFirestore, doc, onSnapshot, setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+            
+            fsDoc = doc; fsSetDoc = setDoc; fsOnSnapshot = onSnapshot;
+
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            firestoreDb = getFirestore(app);
+
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) setupRealtimeSync();
+            });
+
+        } catch (e) {
+            console.log("偵測到本機離線測試或尚未設定 Firebase，自動切換為本機單機版！");
+            document.getElementById('sync-indicator').classList.remove('synced');
+            document.getElementById('sync-indicator').nextSibling.textContent = ' STATUS: 單機測試模式 (Offline)';
+            loadOfflineData();
+        }
+
+        renderScoreInputs('weekly-scores-grid', 'weekly-score');
+        renderScoreInputs('monthly-scores-grid', 'monthly-score');
+    }
+
+    // 啟動應用
+    initApp();
+</script>
+</body>
+</html>
