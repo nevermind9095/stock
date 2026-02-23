@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>504班股票交易所 4.1 雲端與單機雙棲版</title>
+<title>504班股票交易所 5.0 專屬卡牌版</title>
 <!-- 引入 QRCode 生成套件 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -134,10 +134,10 @@
     .top-controls { display: flex; gap: 10px; flex-wrap: wrap;}
     
     .sync-status { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 8px var(--danger); }
-    .sync-status.online { background: var(--danger); } /* 紅色表示未連線 */
-    .sync-status.synced { background: var(--danger); animation: pulseGreen 2s infinite; background: var(--danger); } /* 成功連線變綠色 */
+    .sync-status.online { background: var(--danger); } 
+    .sync-status.synced { background: #00e676; animation: pulseGreen 2s infinite; } 
     
-    @keyframes pulseGreen { 0% { background: #00e676; box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); } 70% { background: #00e676; box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); } 100% { background: #00e676; box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); } }
+    @keyframes pulseGreen { 0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); } }
 
 </style>
 </head>
@@ -145,10 +145,10 @@
 
 <!-- 🌐 主控台介面 -->
 <div class="container" id="main-interface">
-    <h1>📈 504班股票交易所 4.1 雲端與單機雙棲版</h1>
+    <h1>📈 504班股票交易所 5.0 專屬卡牌版</h1>
     
     <div class="top-bar">
-        <span class="ticker"><div id="sync-indicator" class="sync-status"></div> STATUS: 雲端連線偵測中...</span>
+        <span class="ticker"><div id="sync-indicator" class="sync-status"></div> STATUS: 系統啟動中...</span>
         <div class="top-controls">
             <button class="btn btn-warning" style="padding: 5px 15px; color:#000;" onclick="openQRModal()">📱 產生學生 QR Code</button>
             <button class="btn btn-info" style="padding: 5px 15px;" onclick="openMarketDashboard()">📊 大盤即時看板</button>
@@ -237,22 +237,16 @@
     <div id="weekly" class="tab-content">
         <div class="card">
             <h3>📊 週末股價結算分析</h3>
+            <p style="color:var(--text-muted); font-size:0.9rem;">本週必將面臨挑戰！請透過輪盤抽出本週的專屬 18 張大盤事件卡。</p>
             
             <div class="form-grid" style="grid-template-columns: 2fr 1fr;">
-                <div class="form-group">
-                    <label>大盤事件卡 (自動連動 18 張牌庫)：</label>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>本週最終事件決議：</label>
                     <div style="display: flex; gap: 10px;">
-                        <select id="event-card" style="flex:1;"></select>
-                        <button class="btn btn-warning" onclick="openDrawModal()">🎲 輪盤抽籤</button>
+                        <!-- 已經移除無事件，完全由 18 張卡接管 -->
+                        <select id="event-card" style="flex:1; font-weight:bold; color:var(--warning); background:#21262d;"></select>
+                        <button class="btn btn-warning" onclick="openDrawModal()" style="font-size: 1.1rem; padding: 10px 25px;">🎲 輪盤抽籤</button>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>00504 專屬事件：</label>
-                    <select id="etf-event-card">
-                        <option value="normal">無事件 (取7組平均)</option>
-                        <option value="change">🎲 經理人換將 (盲抽一組股價)</option>
-                        <option value="risk">💣 系統性風險 (取最後一名股價)</option>
-                    </select>
                 </div>
             </div>
 
@@ -281,7 +275,7 @@
             <div class="form-group" style="margin-bottom: 20px; background: rgba(210,153,34,0.1); padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color:#e6edf3; margin:0;">
                     <input type="checkbox" id="bumper-harvest" style="width: 20px; height: 20px;">
-                    🎉 啟動「大豐收」事件 (僅持有 00504 者，每張 ETF 額外獲得 $1000 股息)
+                    🎉 若本週曾抽中【00504 基金大豐收】，請打勾 (持有 00504 者額外發放 $1000 股息)
                 </label>
             </div>
             <h4>輸入各組【本月累計總分】(結算股息用)</h4>
@@ -308,7 +302,6 @@
 <div id="kiosk-mode">
     <div class="kiosk-header">
         <h1>🧑‍🎓 個人資產庫存查詢</h1>
-        <!-- 若是由 QR Code 掃描進入，此按鈕會被隱藏，防止學生跳脫 -->
         <button id="kiosk-exit-btn" class="btn btn-outline" style="background:#0d1117; color:#58a6ff; border-color:#58a6ff;" onclick="toggleKioskMode(false)">🔙 關閉並返回主控台</button>
     </div>
     <p style="color:var(--text-muted); font-size:1.1rem; text-align:center; margin-bottom: 30px;">請點擊您的姓名，查看您目前的證券帳戶與未實現損益。</p>
@@ -319,7 +312,6 @@
 
 <!-- ================= 彈跳視窗區 (Modals) ================= -->
 
-<!-- QR Code 產生 Modal -->
 <div class="modal-overlay" id="qr-modal">
     <div class="modal" style="text-align:center;">
         <h2 style="color:var(--warning);">📱 學生自助掃描區</h2>
@@ -401,61 +393,48 @@
     </div>
 </div>
 
-<!-- ================= Firebase 雲端核心邏輯與 JS ================= -->
-<script type="module">
-    // --- 👇 老師專屬的 Firebase Config (已設定完成) ---
-    const MY_GITHUB_FIREBASE_CONFIG = {
-        apiKey: "AIzaSyDJFzG3RrCkJBx5B23lBVcoOHmaqZ2dAYA", 
-        authDomain: "forgemini-7349a.firebaseapp.com",
-        projectId: "forgemini-7349a",
-        storageBucket: "forgemini-7349a.firebasestorage.app",
-        messagingSenderId: "865250968546",
-        appId: "1:865250968546:web:fc3ded71179b709d422fbb"
-    };
-    // ------------------------------------------------------------------------------------------
-
-    let firebaseConfig = MY_GITHUB_FIREBASE_CONFIG;
-    let appIdStr = '504-stock-exchange';
-    try {
-        if (typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config);
-        if (typeof __app_id !== 'undefined') appIdStr = __app_id;
-    } catch (e) { console.warn("Using fallback config."); }
-
-    // --- 🃏 【18張事件卡設定區】 ---
+<!-- ================= 核心邏輯區 (腳本分離，保證UI 100%可運作) ================= -->
+<script>
+    // --- 🃏 【老師專屬 18 張事件卡設定區】 ---
+    // effect 對應底層的數學公式，narrative 代表手動扣分/口頭獎勵事件，底層按正常大盤運算。
     const ALL_18_CARDS = [
-        { id: 1, name: '大牛市來襲', effect: 'bull', img: './cards/1.jpg' },
-        { id: 2, name: '大熊市來襲', effect: 'bear', img: './cards/2.jpg' },
-        { id: 3, name: '國安基金護盤', effect: 'nsf', img: './cards/3.jpg' },
-        { id: 4, name: '熱錢湧入', effect: 'hot', img: './cards/4.jpg' },
-        { id: 5, name: '經濟通縮', effect: 'deflation', img: './cards/5.jpg' },
-        { id: 6, name: '資金集中', effect: 'concentrate', img: './cards/6.jpg' },
-        { id: 7, name: '市場觀望', effect: 'wait', img: './cards/7.jpg' },
-        { id: 8, name: '證交稅徵收', effect: 'tax', img: './cards/8.jpg' },
-        { id: 9, name: '公衛危機', effect: 'narrative', img: './cards/9.jpg' }, 
-        { id: 10, name: '產業大升級', effect: 'narrative', img: './cards/10.jpg' },
-        { id: 11, name: '企業發大財', effect: 'narrative', img: './cards/11.jpg' },
-        { id: 12, name: '天災打擊', effect: 'narrative', img: './cards/12.jpg' },
-        { id: 13, name: '財報超預期', effect: 'narrative', img: './cards/13.jpg' },
-        { id: 14, name: '財報大暴雷', effect: 'narrative', img: './cards/14.jpg' },
-        { id: 15, name: '外資大舉買進', effect: 'narrative', img: './cards/15.jpg' },
-        { id: 16, name: '外資無情拋售', effect: 'narrative', img: './cards/16.jpg' },
-        { id: 17, name: '央行降息', effect: 'narrative', img: './cards/17.jpg' },
-        { id: 18, name: '央行升息', effect: 'narrative', img: './cards/18.jpg' }
+        { id: 1, name: '1.【大牛市來臨】多數上漲', effect: 'bull', img: './cards/1.jpg' },
+        { id: 2, name: '2.【大熊市來襲】多數下跌', effect: 'bear', img: './cards/2.jpg' },
+        { id: 3, name: '3.【國安基金進場】跌幅為零', effect: 'nsf', img: './cards/3.jpg' },
+        { id: 4, name: '4.【熱錢湧入台股】漲幅加倍', effect: 'hot', img: './cards/4.jpg' },
+        { id: 5, name: '5.【經濟通縮衰退】跌幅加倍', effect: 'deflation', img: './cards/5.jpg' },
+        { id: 6, name: '6.【00504 基金大豐收】', effect: 'narrative', img: './cards/6.jpg' }, 
+        { id: 7, name: '7.【資金集中特定產業】僅前2名漲', effect: 'concentrate', img: './cards/7.jpg' },
+        { id: 8, name: '8.【財報地雷】作業遲交雙倍扣分', effect: 'narrative', img: './cards/8.jpg' },
+        { id: 9, name: '9.【公衛危機】整潔缺失雙倍扣分', effect: 'narrative', img: './cards/9.jpg' }, 
+        { id: 10, name: '10.【專利研發季】發言雙倍加分', effect: 'narrative', img: './cards/10.jpg' },
+        { id: 11, name: '11.【專注於研發效率】優質組額外+500元', effect: 'narrative', img: './cards/11.jpg' },
+        { id: 12, name: '12.【行政效率稽查】齊交回條總分+5', effect: 'narrative', img: './cards/12.jpg' },
+        { id: 13, name: '13.【產能滿載】無遲到組額外+500元', effect: 'narrative', img: './cards/13.jpg' },
+        { id: 14, name: '14.【優良財報表揚】作業優良雙倍加分', effect: 'narrative', img: './cards/14.jpg' },
+        { id: 15, name: '15.【市場交易冷清】漲跌停縮水為±300', effect: 'wait', img: './cards/15.jpg' },
+        { id: 16, name: '16.【證交稅調漲】大於2000元者扣200稅金', effect: 'tax', img: './cards/16.jpg' },
+        { id: 17, name: '17.【ETF經理人換將】盲抽一組取代大盤', effect: 'etf_change', img: './cards/17.jpg' },
+        { id: 18, name: '18.【成分股權重調整】最差組取代大盤', effect: 'etf_risk', img: './cards/18.jpg' }
     ];
 
     const MAX_STUDENTS = 27;
     const GROUPS_COUNT = 7;
     const INITIAL_PRICE = 2000;
 
-    window.db = {
-        students: [], stockPrices: {}, lastWeekChanges: {}, transactions: []
-    };
+    // 全域變數
+    window.db = { students: [], stockPrices: {}, lastWeekChanges: {}, transactions: [] };
 
-    let firestoreDb;
-    let auth;
-    let fsDoc, fsSetDoc, fsOnSnapshot; // 儲存雲端連線的函式
+    // 初始化下拉選單
+    function initDropdown() {
+        const select = document.getElementById('event-card');
+        select.innerHTML = '';
+        ALL_18_CARDS.forEach(c => { select.innerHTML += `<option value="${c.effect}">${c.name}</option>`; });
+        renderScoreInputs('weekly-scores-grid', 'weekly-score');
+        renderScoreInputs('monthly-scores-grid', 'monthly-score');
+    }
 
-    // 將 UI 操作綁定至 window
+    // 將所有 UI 函數掛載到 window，確保 onClick 絕對能找到
     window.switchTab = function(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-tabs button').forEach(el => el.classList.remove('active'));
@@ -550,7 +529,7 @@
         document.getElementById('student-portfolio-modal').style.display = 'flex';
     };
 
-    // --- 🃏 抽籤系統 ---
+    // --- 🃏 抽籤系統 (保證觸發) ---
     let drawInterval;
     window.openDrawModal = function() {
         const imgEl = document.getElementById('card-img-display');
@@ -591,13 +570,14 @@
                 container.classList.remove('shaking');
                 let finalCard = ALL_18_CARDS[Math.floor(Math.random() * ALL_18_CARDS.length)];
                 renderCardToDisplay(finalCard);
+                // 自動連動底層下拉選單
                 document.getElementById('event-card').value = finalCard.effect;
                 setTimeout(() => { document.getElementById('close-draw-btn').style.display = 'block'; }, 1000);
             }
         }, speed);
     };
 
-    // --- 其他邏輯 ---
+    // --- 名單拖曳邏輯 ---
     function renderRosterDND() {
         const unassignedPool = document.getElementById('unassigned-pool');
         const groupsGrid = document.getElementById('groups-grid');
@@ -639,6 +619,7 @@
         window.saveDataToCloud(); window.closeModal('bulk-edit-modal');
     };
 
+    // --- 極速申購邏輯 ---
     let currentFastBuyerId = null; let currentFastStockId = null;
     function renderFastBuyerGrid() {
         const grid = document.getElementById('buyer-grid');
@@ -724,6 +705,7 @@
     }
     let tempNewPrices = {}; let tempChanges = {}; 
 
+    // --- 週末結算核心計算邏輯 (連動 18 張卡片公式) ---
     window.previewWeeklyPrice = function() {
         const inputs = document.querySelectorAll('.weekly-score');
         let groupScores = []; let missing = false;
@@ -734,14 +716,22 @@
         });
         if (missing) return window.showModal('資料未齊', '請完整填寫 1~7 組的分數才能進行大盤運算。');
 
-        const event = document.getElementById('event-card').value;
-        const etfEvent = document.getElementById('etf-event-card').value;
+        const event = document.getElementById('event-card').value; // 抓取 18 張卡片連動的效果
         
         let sortedScores = [...groupScores].sort((a, b) => b.score - a.score);
-        let baselineIndex = 3; 
-        if (event === 'bull') baselineIndex = 5; if (event === 'bear') baselineIndex = 1; 
+        let baselineIndex = 3; // 預設第4名
+        
+        // 卡牌影響 1：基準線移動
+        if (event === 'bull') baselineIndex = 5; 
+        if (event === 'bear') baselineIndex = 1; 
+        
         let baselineScore = sortedScores[baselineIndex].score;
-        let upMultiplier = event === 'hot' ? 100 : 50; let downMultiplier = event === 'deflation' ? 100 : 50;
+        
+        // 卡牌影響 2：漲跌幅倍數
+        let upMultiplier = event === 'hot' ? 100 : 50; 
+        let downMultiplier = event === 'deflation' ? 100 : 50;
+        
+        // 卡牌影響 3：漲跌停限制
         let maxUpCap = 500; if (event === 'hot') maxUpCap = 1000; if (event === 'wait') maxUpCap = 300;
         let maxDownCap = -500; if (event === 'deflation') maxDownCap = -1000; if (event === 'wait') maxDownCap = -300;
         if (event === 'nsf') maxDownCap = 0; 
@@ -750,15 +740,27 @@
         groupScores.forEach(group => {
             let scoreDiff = group.score - baselineScore;
             let priceChange = 0;
+            
+            // 基礎漲跌計算
             if (scoreDiff > 0) priceChange = Math.min(scoreDiff * upMultiplier, maxUpCap);
             else if (scoreDiff < 0) priceChange = Math.max(scoreDiff * downMultiplier, maxDownCap);
+            
+            // 卡牌影響 4：資金集中
             if (event === 'concentrate') {
                 let rank = sortedScores.findIndex(s => s.id === group.id) + 1;
-                if (rank > 2 && priceChange > 0) priceChange = 0;
+                if (rank > 2 && priceChange > 0) priceChange = 0; // 只有前兩名能漲
             }
+            
             let newPrice = group.currentPrice + priceChange;
             let taxDeducted = false;
-            if (event === 'tax' && priceChange > 0) { newPrice -= 200; taxDeducted = true; priceChange -= 200; } 
+            
+            // 卡牌影響 5：證交稅 (結算價 > 2000，扣 200)
+            if (event === 'tax' && newPrice > 2000) { 
+                newPrice -= 200; 
+                taxDeducted = true; 
+                priceChange = newPrice - group.currentPrice; 
+            } 
+            
             calcMap[group.id] = { newPrice, priceChange, scoreDiff, taxDeducted, currentPrice: group.currentPrice };
         });
 
@@ -767,21 +769,32 @@
             let data = calcMap[group.id];
             tempNewPrices[group.id] = data.newPrice; tempChanges[group.id] = data.priceChange;
             let changeClass = data.priceChange > 0 ? 'text-up' : (data.priceChange < 0 ? 'text-down' : 'text-neutral');
-            let changeSymbol = data.priceChange > 0 ? '▲ +' : (data.priceChange < 0 ? '▼ -' : '— ');
-            let taxNote = data.taxDeducted ? ' <span style="font-size:0.8rem;color:var(--warning);">(含稅)</span>' : '';
+            let changeSymbol = data.priceChange > 0 ? '▲ +' : (data.priceChange < 0 ? '▼ ' : '— '); // 自動帶負號
+            let taxNote = data.taxDeducted ? ' <span style="font-size:0.8rem;color:var(--warning);">(扣稅200)</span>' : '';
             let rankBadge = `${index + 1}`;
             if(index===0) rankBadge = '🥇 1'; if(index===1) rankBadge = '🥈 2'; if(index===2) rankBadge = '🥉 3';
             resultRows.push(`<tr><td style="font-weight:bold;">${rankBadge}</td><td>第 ${group.id} 組</td><td>${group.score} <small style="color:var(--text-muted)">(距基準${data.scoreDiff > 0 ? '+'+data.scoreDiff : data.scoreDiff})</small></td><td>${data.currentPrice}</td><td class="${changeClass}">${changeSymbol}${Math.abs(data.priceChange)}${taxNote}</td><td style="font-weight:bold; font-size:1.1rem; color: #fff;">${data.newPrice}</td></tr>`);
         });
 
+        // 00504 大盤 ETF 計算邏輯 (連動卡牌 17, 18)
         let etfCurrent = window.db.stockPrices['00504']; let etfNewPrice = 0; let etfNote = "";
-        if (etfEvent === 'change') { let randomId = Math.floor(Math.random() * 7) + 1; etfNewPrice = tempNewPrices[randomId.toString()]; etfNote = `換將盲抽 (抽中第 ${randomId} 組)`; } 
-        else if (etfEvent === 'risk') { let lastGroup = sortedScores[6]; etfNewPrice = tempNewPrices[lastGroup.id]; etfNote = `系統風險 (最後一名)`; } 
-        else { let sum = Object.keys(tempNewPrices).reduce((acc, val) => acc + tempNewPrices[val], 0); etfNewPrice = Math.round(sum / 7); etfNote = `追蹤大盤 (7組平均價)`; }
+        if (event === 'etf_change') { 
+            let randomId = Math.floor(Math.random() * 7) + 1; 
+            etfNewPrice = tempNewPrices[randomId.toString()]; 
+            etfNote = `經理人換將 (單壓第 ${randomId} 組)`; 
+        } else if (event === 'etf_risk') { 
+            let lastGroup = sortedScores[6]; 
+            etfNewPrice = tempNewPrices[lastGroup.id]; 
+            etfNote = `權重調整 (與最後一名同價)`; 
+        } else { 
+            let sum = Object.keys(tempNewPrices).reduce((acc, val) => acc + tempNewPrices[val], 0); 
+            etfNewPrice = Math.round(sum / 7); 
+            etfNote = `追蹤大盤 (7組平均價)`; 
+        }
 
         tempNewPrices['00504'] = etfNewPrice; let etfChange = etfNewPrice - etfCurrent; tempChanges['00504'] = etfChange;
         let etfChangeClass = etfChange > 0 ? 'text-up' : (etfChange < 0 ? 'text-down' : 'text-neutral');
-        let etfChangeSymbol = etfChange > 0 ? '▲ +' : (etfChange < 0 ? '▼ -' : '— ');
+        let etfChangeSymbol = etfChange > 0 ? '▲ +' : (etfChange < 0 ? '▼ ' : '— ');
         resultRows.push(`<tr style="background: rgba(210,153,34,0.1); border-top: 2px solid #d29922;"><td>🎯 <strong>ETF</strong></td><td style="color:#d29922; font-weight:bold;">00504</td><td style="color:var(--text-muted); font-size:0.85rem;">${etfNote}</td><td>${etfCurrent}</td><td class="${etfChangeClass}">${etfChangeSymbol}${Math.abs(etfChange)}</td><td style="font-weight:bold; font-size:1.1rem; color: #d29922;">${etfNewPrice}</td></tr>`);
 
         document.querySelector('#price-table tbody').innerHTML = resultRows.join('');
@@ -849,20 +862,11 @@
         }
     };
 
-    // --- Firebase 初始化區塊 (採用動態載入防呆設計) ---
-    function initializeEmptyDb() {
-        window.db = { students: [], stockPrices: {}, lastWeekChanges: {}, transactions: [] };
-        for (let i = 1; i <= MAX_STUDENTS; i++) window.db.students.push({ id: i.toString(), name: '', group: '' });
-        for (let i = 1; i <= GROUPS_COUNT; i++) { window.db.stockPrices[i.toString()] = INITIAL_PRICE; window.db.lastWeekChanges[i.toString()] = 0; }
-        window.db.stockPrices['00504'] = INITIAL_PRICE; window.db.lastWeekChanges['00504'] = 0;
-    }
-
-    function loadOfflineData() {
-        const stored = localStorage.getItem('504_stock_exchange_v4');
-        if (stored) window.db = JSON.parse(stored);
-        else initializeEmptyDb();
+    // --- 本機資料存檔防呆 (當 Firebase 未就緒時的備用方案) ---
+    window.saveDataToCloud = function() {
+        localStorage.setItem('504_stock_exchange_v5', JSON.stringify(window.db));
         updateAllUI();
-    }
+    };
 
     function updateAllUI() {
         renderRosterDND();
@@ -870,6 +874,42 @@
         renderTransactionsMerged();
         if (document.getElementById('kiosk-mode').style.display === 'block') renderKioskGrid();
         if (currentFastBuyerId) updateQuotaDisplay();
+    }
+
+    // 啟動畫面
+    initDropdown();
+</script>
+
+<!-- ================= Firebase 雲端核心邏輯 (外掛模式) ================= -->
+<script type="module">
+    const MY_GITHUB_FIREBASE_CONFIG = {
+        apiKey: "AIzaSyDJFzG3RrCkJBx5B23lBVcoOHmaqZ2dAYA", 
+        authDomain: "forgemini-7349a.firebaseapp.com",
+        projectId: "forgemini-7349a",
+        storageBucket: "forgemini-7349a.firebasestorage.app",
+        messagingSenderId: "865250968546",
+        appId: "1:865250968546:web:fc3ded71179b709d422fbb"
+    };
+
+    let firebaseConfig = MY_GITHUB_FIREBASE_CONFIG;
+    let appIdStr = '504-stock-exchange';
+
+    let firestoreDb;
+    let auth;
+    let fsDoc, fsSetDoc, fsOnSnapshot; 
+
+    function initializeEmptyDb() {
+        window.db = { students: [], stockPrices: {}, lastWeekChanges: {}, transactions: [] };
+        for (let i = 1; i <= 27; i++) window.db.students.push({ id: i.toString(), name: '', group: '' });
+        for (let i = 1; i <= 7; i++) { window.db.stockPrices[i.toString()] = 2000; window.db.lastWeekChanges[i.toString()] = 0; }
+        window.db.stockPrices['00504'] = 2000; window.db.lastWeekChanges['00504'] = 0;
+    }
+
+    function loadOfflineData() {
+        const stored = localStorage.getItem('504_stock_exchange_v5');
+        if (stored) window.db = JSON.parse(stored);
+        else initializeEmptyDb();
+        updateAllUI();
     }
 
     function setupRealtimeSync() {
@@ -892,23 +932,7 @@
         });
     }
 
-    window.saveDataToCloud = async function() {
-        localStorage.setItem('504_stock_exchange_v4', JSON.stringify(window.db));
-        if (auth && auth.currentUser && fsDoc && fsSetDoc) {
-            try {
-                const docRef = fsDoc(firestoreDb, 'artifacts', appIdStr, 'public', 'data', 'exchangeData', 'main');
-                await fsSetDoc(docRef, window.db);
-            } catch (e) { console.error("同步失敗", e); }
-        }
-        updateAllUI();
-    }
-
-    async function initApp() {
-        // UI 初始化
-        const select = document.getElementById('event-card');
-        select.innerHTML = '';
-        ALL_18_CARDS.forEach(c => { select.innerHTML += `<option value="${c.effect}">${c.name}</option>`; });
-
+    async function initFirebase() {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('mode') === 'kiosk') {
             window.isStrictKiosk = true;
@@ -916,41 +940,43 @@
             window.toggleKioskMode(true);
         }
 
-        // 核心：動態載入 Firebase (解決本機雙擊開啟的模組阻擋問題)
         try {
             const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
-            const { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+            const { getAuth, signInAnonymously, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
             const { getFirestore, doc, onSnapshot, setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
             
             fsDoc = doc; fsSetDoc = setDoc; fsOnSnapshot = onSnapshot;
-
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             firestoreDb = getFirestore(app);
 
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
+            // 覆寫存檔機制：不僅存本機，還存雲端
+            window.saveDataToCloud = async function() {
+                localStorage.setItem('504_stock_exchange_v5', JSON.stringify(window.db));
+                if (auth && auth.currentUser && fsDoc && fsSetDoc) {
+                    try {
+                        const dRef = fsDoc(firestoreDb, 'artifacts', appIdStr, 'public', 'data', 'exchangeData', 'main');
+                        await fsSetDoc(dRef, window.db);
+                    } catch (e) { console.error("同步失敗", e); }
+                }
+                updateAllUI();
+            };
 
+            await signInAnonymously(auth);
             onAuthStateChanged(auth, (user) => {
                 if (user) setupRealtimeSync();
             });
 
         } catch (e) {
-            console.log("偵測到本機離線測試或尚未設定 Firebase，自動切換為本機單機版！");
+            console.log("切換為單機版運作");
             document.getElementById('sync-indicator').classList.remove('synced');
             document.getElementById('sync-indicator').nextSibling.textContent = ' STATUS: 單機測試模式 (Offline)';
             loadOfflineData();
         }
-
-        renderScoreInputs('weekly-scores-grid', 'weekly-score');
-        renderScoreInputs('monthly-scores-grid', 'monthly-score');
     }
 
-    // 啟動應用
-    initApp();
+    // 啟動雲端模組
+    initFirebase();
 </script>
 </body>
 </html>
