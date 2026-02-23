@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>504班股票交易所 5.0 專屬卡牌版</title>
+<title>504班股票交易所 5.1 備份還原穩定版</title>
 <!-- 引入 QRCode 生成套件 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -145,23 +145,23 @@
 
 <!-- 🌐 主控台介面 -->
 <div class="container" id="main-interface">
-    <h1>📈 504班股票交易所 5.0 專屬卡牌版</h1>
+    <h1>📈 504班股票交易所 5.1 備份還原穩定版</h1>
     
     <div class="top-bar">
         <span class="ticker"><div id="sync-indicator" class="sync-status"></div> STATUS: 系統啟動中...</span>
         <div class="top-controls">
-            <button class="btn btn-warning" style="padding: 5px 15px; color:#000;" onclick="openQRModal()">📱 產生學生 QR Code</button>
-            <button class="btn btn-info" style="padding: 5px 15px;" onclick="openMarketDashboard()">📊 大盤即時看板</button>
-            <button class="btn btn-primary" style="padding: 5px 15px;" onclick="toggleKioskMode(true)">🧑‍🎓 進入查詢機</button>
-            <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.85rem;" onclick="confirmResetMonth()">🔄 重置月份</button>
+            <button class="btn btn-warning" style="padding: 5px 15px; color:#000;" onclick="window.openQRModal()">📱 產生學生 QR Code</button>
+            <button class="btn btn-info" style="padding: 5px 15px;" onclick="window.openMarketDashboard()">📊 大盤即時看板</button>
+            <button class="btn btn-primary" style="padding: 5px 15px;" onclick="window.toggleKioskMode(true)">🧑‍🎓 進入查詢機</button>
+            <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.85rem;" onclick="window.confirmResetMonth()">🔄 重置月份</button>
         </div>
     </div>
 
     <div class="nav-tabs">
-        <button class="active" onclick="switchTab('roster')">⚙️ 名單與分組</button>
-        <button onclick="switchTab('buy')">⚡ 極速申購終端</button>
-        <button onclick="switchTab('weekly')">📊 結算走勢與抽籤</button>
-        <button onclick="switchTab('monthly')">💰 月底分紅計算</button>
+        <button class="active" onclick="window.switchTab('roster')">⚙️ 名單與分組</button>
+        <button onclick="window.switchTab('buy')">⚡ 極速申購終端</button>
+        <button onclick="window.switchTab('weekly')">📊 結算走勢與抽籤</button>
+        <button onclick="window.switchTab('monthly')">💰 月底分紅計算</button>
     </div>
 
     <!-- 1. 名單設定區 -->
@@ -169,16 +169,30 @@
         <div class="card">
             <div style="display:flex; justify-content: space-between; align-items: center;">
                 <h3>班級名單與組別設定</h3>
-                <button class="btn btn-outline" onclick="openBulkEditModal()">📝 批量貼上名單</button>
+                <button class="btn btn-outline" onclick="window.openBulkEditModal()">📝 批量貼上名單</button>
             </div>
             <p style="color:var(--text-muted); font-size:0.9rem;">提示：請直接將學生拖曳至對應的小組內自動儲存。</p>
             <div class="dnd-container">
                 <div>
                     <h4>未分組名單</h4>
-                    <div id="unassigned-pool" class="dnd-pool" ondrop="drop(event, '')" ondragover="allowDrop(event)"></div>
+                    <div id="unassigned-pool" class="dnd-pool" ondrop="window.drop(event, '')" ondragover="window.allowDrop(event)"></div>
                 </div>
                 <h4>小組分區</h4>
                 <div class="dnd-groups-grid" id="groups-grid"></div>
+            </div>
+        </div>
+        
+        <!-- 新增：備份與還原區塊 -->
+        <div class="card" style="margin-top: 25px;">
+            <h3>💾 資料備份與還原 (手動)</h3>
+            <p style="color:var(--text-muted); font-size:0.9rem;">為防止意外，您可以將目前的交易所所有資料下載為備份檔，或從備份檔還原。</p>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="window.exportBackup()">📥 匯出資料 (下載備份 JSON)</button>
+                <!-- 偽裝成按鈕的檔案上傳標籤 -->
+                <label class="btn btn-warning" style="cursor: pointer; margin: 0; display: inline-flex; align-items: center; justify-content: center; font-weight: bold;">
+                    📤 匯入資料 (選擇備份還原)
+                    <input type="file" accept=".json" style="display: none;" onchange="window.importBackup(event)">
+                </label>
             </div>
         </div>
     </div>
@@ -199,24 +213,24 @@
                 </div>
                 
                 <div class="stock-grid" id="fast-stock-grid">
-                    <button class="stock-btn" onclick="selectFastStock('1')">第 1 組</button>
-                    <button class="stock-btn" onclick="selectFastStock('2')">第 2 組</button>
-                    <button class="stock-btn" onclick="selectFastStock('3')">第 3 組</button>
-                    <button class="stock-btn" onclick="selectFastStock('4')">第 4 組</button>
-                    <button class="stock-btn" onclick="selectFastStock('5')">第 5 組</button>
-                    <button class="stock-btn" onclick="selectFastStock('6')">第 6 組</button>
-                    <button class="stock-btn" onclick="selectFastStock('7')">第 7 組</button>
-                    <button class="stock-btn" style="border-color:#d29922; color:#d29922;" onclick="selectFastStock('00504')">00504 ETF</button>
+                    <button class="stock-btn" onclick="window.selectFastStock('1')">第 1 組</button>
+                    <button class="stock-btn" onclick="window.selectFastStock('2')">第 2 組</button>
+                    <button class="stock-btn" onclick="window.selectFastStock('3')">第 3 組</button>
+                    <button class="stock-btn" onclick="window.selectFastStock('4')">第 4 組</button>
+                    <button class="stock-btn" onclick="window.selectFastStock('5')">第 5 組</button>
+                    <button class="stock-btn" onclick="window.selectFastStock('6')">第 6 組</button>
+                    <button class="stock-btn" onclick="window.selectFastStock('7')">第 7 組</button>
+                    <button class="stock-btn" style="border-color:#d29922; color:#d29922;" onclick="window.selectFastStock('00504')">00504 ETF</button>
                 </div>
 
                 <div id="amount-selector" style="display:none; text-align:center; padding-top:10px; border-top: 1px solid var(--border);">
                     <h5 style="margin:0 0 10px 0; color:var(--text-main);">3. 點擊張數立即下單</h5>
                     <div class="amount-grid">
-                        <button class="amount-btn" onclick="executeFastBuy(1)">1</button>
-                        <button class="amount-btn" onclick="executeFastBuy(2)">2</button>
-                        <button class="amount-btn" onclick="executeFastBuy(3)">3</button>
-                        <button class="amount-btn" onclick="executeFastBuy(4)">4</button>
-                        <button class="amount-btn" onclick="executeFastBuy(5)">5</button>
+                        <button class="amount-btn" onclick="window.executeFastBuy(1)">1</button>
+                        <button class="amount-btn" onclick="window.executeFastBuy(2)">2</button>
+                        <button class="amount-btn" onclick="window.executeFastBuy(3)">3</button>
+                        <button class="amount-btn" onclick="window.executeFastBuy(4)">4</button>
+                        <button class="amount-btn" onclick="window.executeFastBuy(5)">5</button>
                     </div>
                 </div>
             </div>
@@ -243,9 +257,8 @@
                 <div class="form-group" style="grid-column: span 2;">
                     <label>本週最終事件決議：</label>
                     <div style="display: flex; gap: 10px;">
-                        <!-- 已經移除無事件，完全由 18 張卡接管 -->
                         <select id="event-card" style="flex:1; font-weight:bold; color:var(--warning); background:#21262d;"></select>
-                        <button class="btn btn-warning" onclick="openDrawModal()" style="font-size: 1.1rem; padding: 10px 25px;">🎲 輪盤抽籤</button>
+                        <button class="btn btn-warning" onclick="window.openDrawModal()" style="font-size: 1.1rem; padding: 10px 25px;">🎲 輪盤抽籤</button>
                     </div>
                 </div>
             </div>
@@ -253,7 +266,7 @@
             <h4>輸入各組本週總分</h4>
             <div id="weekly-scores-grid" class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap:10px;"></div>
             
-            <button class="btn btn-primary btn-block" onclick="previewWeeklyPrice()">🔍 運算本週走勢 (預覽)</button>
+            <button class="btn btn-primary btn-block" onclick="window.previewWeeklyPrice()">🔍 運算本週走勢 (預覽)</button>
         </div>
 
         <div class="card" id="weekly-preview-card" style="display: none;">
@@ -264,7 +277,7 @@
                     <tbody></tbody>
                 </table>
             </div>
-            <button class="btn btn-success btn-block" style="margin-top: 20px;" onclick="confirmWeeklyApply()">✅ 確認收盤 (儲存紀錄)</button>
+            <button class="btn btn-success btn-block" style="margin-top: 20px;" onclick="window.confirmWeeklyApply()">✅ 確認收盤 (儲存紀錄)</button>
         </div>
     </div>
 
@@ -280,13 +293,13 @@
             </div>
             <h4>輸入各組【本月累計總分】(結算股息用)</h4>
             <div id="monthly-scores-grid" class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap:10px;"></div>
-            <button class="btn btn-primary btn-block" onclick="calculateMonthly()">💻 執行運算並產出報表</button>
+            <button class="btn btn-primary btn-block" onclick="window.calculateMonthly()">💻 執行運算並產出報表</button>
         </div>
 
         <div class="card" id="monthly-result-card" style="display: none;">
             <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h4 style="margin:0;">個人結算報表</h4>
-                <button class="btn btn-outline" onclick="exportCSV()">📊 匯出 CSV</button>
+                <button class="btn btn-outline" onclick="window.exportCSV()">📊 匯出 CSV</button>
             </div>
             <div class="table-responsive">
                 <table id="final-table">
@@ -302,7 +315,7 @@
 <div id="kiosk-mode">
     <div class="kiosk-header">
         <h1>🧑‍🎓 個人資產庫存查詢</h1>
-        <button id="kiosk-exit-btn" class="btn btn-outline" style="background:#0d1117; color:#58a6ff; border-color:#58a6ff;" onclick="toggleKioskMode(false)">🔙 關閉並返回主控台</button>
+        <button id="kiosk-exit-btn" class="btn btn-outline" style="background:#0d1117; color:#58a6ff; border-color:#58a6ff;" onclick="window.toggleKioskMode(false)">🔙 關閉並返回主控台</button>
     </div>
     <p style="color:var(--text-muted); font-size:1.1rem; text-align:center; margin-bottom: 30px;">請點擊您的姓名，查看您目前的證券帳戶與未實現損益。</p>
     <div class="kiosk-grid" id="kiosk-student-grid">
@@ -317,7 +330,7 @@
         <h2 style="color:var(--warning);">📱 學生自助掃描區</h2>
         <p style="color:var(--text-muted);">請學生使用平板掃描下方 QR Code，即會自動進入「個人庫存查詢畫面」。</p>
         <div id="qrcode-display"></div>
-        <button class="btn btn-outline btn-block" style="margin-top:20px;" onclick="closeModal('qr-modal')">關閉</button>
+        <button class="btn btn-outline btn-block" style="margin-top:20px;" onclick="window.closeModal('qr-modal')">關閉</button>
     </div>
 </div>
 
@@ -327,8 +340,8 @@
         <p style="color:var(--text-muted); font-size:0.9rem;">每行一個名字，系統將自動依序分配為 1~27 號。</p>
         <textarea id="bulk-names-input" rows="12" style="width: 100%; box-sizing: border-box; resize: vertical; margin-bottom: 15px;"></textarea>
         <div style="display:flex; gap:10px;">
-            <button class="btn btn-primary" style="flex:1;" onclick="saveBulkNames()">💾 儲存名單</button>
-            <button class="btn btn-outline" style="flex:1;" onclick="closeModal('bulk-edit-modal')">取消</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="window.saveBulkNames()">💾 儲存名單</button>
+            <button class="btn btn-outline" style="flex:1;" onclick="window.closeModal('bulk-edit-modal')">取消</button>
         </div>
     </div>
 </div>
@@ -343,7 +356,7 @@
                 <tbody></tbody>
             </table>
         </div>
-        <button class="btn btn-outline btn-block" style="margin-top:20px;" onclick="closeModal('dashboard-modal')">關閉看板</button>
+        <button class="btn btn-outline btn-block" style="margin-top:20px;" onclick="window.closeModal('dashboard-modal')">關閉看板</button>
     </div>
 </div>
 
@@ -364,7 +377,7 @@
                 <div>總報酬率<br><b id="sp-roi">0%</b></div>
             </div>
         </div>
-        <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="closeModal('student-portfolio-modal')">確認並離開</button>
+        <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="window.closeModal('student-portfolio-modal')">確認並離開</button>
     </div>
 </div>
 
@@ -375,14 +388,13 @@
         <div id="card-display-container" class="card-display-container">
             <img id="card-img-display" src="" alt="事件卡">
             <div id="card-fallback" class="card-fallback">
-                <!-- 修正點：加入 id="card-fallback-icon" 以避免 JavaScript 錯誤 -->
                 <div id="card-fallback-icon" class="card-fallback-icon">❓</div>
                 <div id="card-fallback-title" class="card-fallback-title">準備抽卡</div>
             </div>
         </div>
 
-        <button id="draw-btn" class="btn btn-warning btn-block" style="font-size:1.2rem; padding:15px;" onclick="startDraw()">🎰 開始抽卡</button>
-        <button id="close-draw-btn" class="btn btn-outline btn-block" style="margin-top:10px;" onclick="closeModal('draw-modal')">關閉</button>
+        <button id="draw-btn" class="btn btn-warning btn-block" style="font-size:1.2rem; padding:15px;" onclick="window.startDraw()">🎰 開始抽卡</button>
+        <button id="close-draw-btn" class="btn btn-outline btn-block" style="margin-top:10px;" onclick="window.closeModal('draw-modal')">關閉</button>
     </div>
 </div>
 
@@ -390,14 +402,13 @@
     <div class="modal" style="text-align:center; max-width:400px;">
         <h2 id="modal-title">提示訊息</h2>
         <p id="modal-desc" style="margin-bottom: 25px;"></p>
-        <button class="btn btn-primary" onclick="closeModal('custom-modal')" style="min-width: 120px;">確定</button>
+        <button class="btn btn-primary" onclick="window.closeModal('custom-modal')" style="min-width: 120px;">確定</button>
     </div>
 </div>
 
-<!-- ================= 核心邏輯區 (腳本分離，保證UI 100%可運作) ================= -->
+<!-- ================= 核心邏輯區 (全面使用 window 全域綁定，防止作用域報錯) ================= -->
 <script>
     // --- 🃏 【老師專屬 18 張事件卡設定區】 ---
-    // effect 對應底層的數學公式，narrative 代表手動扣分/口頭獎勵事件，底層按正常大盤運算。
     const ALL_18_CARDS = [
         { id: 1, name: '1.【大牛市來臨】多數上漲', effect: 'bull', img: './cards/1.jpg' },
         { id: 2, name: '2.【大熊市來襲】多數下跌', effect: 'bear', img: './cards/2.jpg' },
@@ -425,14 +436,17 @@
 
     // 全域變數
     window.db = { students: [], stockPrices: {}, lastWeekChanges: {}, transactions: [] };
+    window.currentFastBuyerId = null; 
+    window.currentFastStockId = null;
+    let drawInterval;
 
-    // 初始化下拉選單
+    // 初始化下拉選單與輸入框
     function initDropdown() {
         const select = document.getElementById('event-card');
         select.innerHTML = '';
         ALL_18_CARDS.forEach(c => { select.innerHTML += `<option value="${c.effect}">${c.name}</option>`; });
-        renderScoreInputs('weekly-scores-grid', 'weekly-score');
-        renderScoreInputs('monthly-scores-grid', 'monthly-score');
+        window.renderScoreInputs('weekly-scores-grid', 'weekly-score');
+        window.renderScoreInputs('monthly-scores-grid', 'monthly-score');
     }
 
     // 將所有 UI 函數掛載到 window，確保 onClick 絕對能找到
@@ -441,7 +455,7 @@
         document.querySelectorAll('.nav-tabs button').forEach(el => el.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
         event.target.classList.add('active');
-        if (tabId === 'buy') renderFastBuyerGrid(); 
+        if (tabId === 'buy') window.renderFastBuyerGrid(); 
     };
 
     window.showModal = function(title, desc) {
@@ -454,6 +468,44 @@
     window.formatMoney = function(num) { return '$' + num.toLocaleString('en-US'); };
     window.getStockName = function(stockId) { return stockId === '00504' ? '00504 大盤' : `第${stockId}組`; };
 
+    // --- 資料匯出與匯入功能 (Backup) ---
+    window.exportBackup = function() {
+        const dataStr = JSON.stringify(window.db, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateStr = new Date().toISOString().split('T')[0];
+        a.href = url;
+        a.download = `504班股票交易所_備份_${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    window.importBackup = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedDb = JSON.parse(e.target.result);
+                if (importedDb && importedDb.students && importedDb.stockPrices) {
+                    window.db = importedDb;
+                    window.saveDataToCloud(); 
+                    window.updateAllUI(); 
+                    window.showModal('還原成功', '資料已成功還原！');
+                } else {
+                    window.showModal('格式錯誤', '上傳的檔案不是有效的備份檔。');
+                }
+            } catch (err) {
+                window.showModal('解析錯誤', '檔案解析失敗，請確認檔案是否損毀。');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = ''; // 重置 file input，允許重複上傳同一個檔
+    };
+
     window.openMarketDashboard = function() {
         const tbody = document.querySelector('#dashboard-table tbody');
         tbody.innerHTML = '';
@@ -462,7 +514,7 @@
             let price = window.db.stockPrices[k] || INITIAL_PRICE;
             let change = window.db.lastWeekChanges[k] || 0;
             let changeStr = change === 0 ? '<span class="text-neutral">— 0</span>' : (change > 0 ? `<span class="text-up">▲ +${change}</span>` : `<span class="text-down">▼ ${change}</span>`); 
-            tbody.innerHTML += `<tr><td style="font-weight:bold;">${getStockName(k)}</td><td>${changeStr}</td><td style="font-size:1.2rem; color:var(--highlight); font-weight:bold;">${price}</td></tr>`;
+            tbody.innerHTML += `<tr><td style="font-weight:bold;">${window.getStockName(k)}</td><td>${changeStr}</td><td style="font-size:1.2rem; color:var(--highlight); font-weight:bold;">${price}</td></tr>`;
         });
         document.getElementById('dashboard-modal').style.display = 'flex';
     };
@@ -480,14 +532,14 @@
         if (isActive) {
             document.getElementById('main-interface').style.display = 'none';
             document.getElementById('kiosk-mode').style.display = 'block';
-            renderKioskGrid();
+            window.renderKioskGrid();
         } else {
             document.getElementById('kiosk-mode').style.display = 'none';
             document.getElementById('main-interface').style.display = 'block';
         }
     };
 
-    function renderKioskGrid() {
+    window.renderKioskGrid = function() {
         const grid = document.getElementById('kiosk-student-grid');
         grid.innerHTML = '';
         window.db.students.filter(s => s.name !== '').forEach(st => {
@@ -497,7 +549,7 @@
             btn.onclick = () => window.openStudentPortfolio(st.id);
             grid.appendChild(btn);
         });
-    }
+    };
 
     window.openStudentPortfolio = function(studentId) {
         const st = window.db.students.find(s => s.id === studentId);
@@ -518,11 +570,11 @@
                 
                 totalCost += cost; totalValue += value;
                 let profitStr = profit === 0 ? '<span class="text-neutral">0</span>' : (profit > 0 ? `<span class="text-up">▲ +${profit}</span>` : `<span class="text-down">▼ ${profit}</span>`);
-                tbody.innerHTML += `<tr><td style="font-weight:bold;">${getStockName(tx.stockId)}</td><td>${tx.amount}</td><td>${cost}</td><td style="color:#fff;">${value}</td><td>${profitStr}</td></tr>`;
+                tbody.innerHTML += `<tr><td style="font-weight:bold;">${window.getStockName(tx.stockId)}</td><td>${tx.amount}</td><td>${cost}</td><td style="color:#fff;">${value}</td><td>${profitStr}</td></tr>`;
             });
         }
-        document.getElementById('sp-cost').innerText = formatMoney(totalCost);
-        document.getElementById('sp-value').innerText = formatMoney(totalValue);
+        document.getElementById('sp-cost').innerText = window.formatMoney(totalCost);
+        document.getElementById('sp-value').innerText = window.formatMoney(totalValue);
         let roi = totalCost > 0 ? ((totalValue - totalCost) / totalCost * 100).toFixed(1) : 0;
         let roiEl = document.getElementById('sp-roi');
         roiEl.innerText = `${roi > 0 ? '+' : ''}${roi}%`;
@@ -530,22 +582,24 @@
         document.getElementById('student-portfolio-modal').style.display = 'flex';
     };
 
-    // --- 🃏 抽籤系統 (保證觸發) ---
-    let drawInterval;
+    // --- 🃏 抽籤系統 (已修復點擊無反應問題) ---
     window.openDrawModal = function() {
         const imgEl = document.getElementById('card-img-display');
         const fallbackEl = document.getElementById('card-fallback');
         const container = document.getElementById('card-display-container');
-        imgEl.style.display = 'none'; fallbackEl.style.display = 'flex';
+        
+        imgEl.style.display = 'none'; 
+        fallbackEl.style.display = 'flex';
         document.getElementById('card-fallback-icon').innerText = '❓';
         document.getElementById('card-fallback-title').innerText = "準備抽卡";
+        
         container.classList.remove('shaking');
         document.getElementById('draw-btn').style.display = 'block';
         document.getElementById('close-draw-btn').style.display = 'block';
         document.getElementById('draw-modal').style.display = 'flex';
     };
 
-    function renderCardToDisplay(card) {
+    window.renderCardToDisplay = function(card) {
         const imgEl = document.getElementById('card-img-display');
         const fallbackEl = document.getElementById('card-fallback');
         imgEl.style.display = 'none'; fallbackEl.style.display = 'flex';
@@ -553,7 +607,7 @@
         document.getElementById('card-fallback-title').innerText = card.name;
         imgEl.src = card.img;
         imgEl.onload = () => { imgEl.style.display = 'block'; fallbackEl.style.display = 'none'; };
-    }
+    };
 
     window.startDraw = function() {
         document.getElementById('draw-btn').style.display = 'none';
@@ -564,13 +618,13 @@
         let counter = 0; let speed = 80; 
         drawInterval = setInterval(() => {
             let randCard = ALL_18_CARDS[Math.floor(Math.random() * ALL_18_CARDS.length)];
-            renderCardToDisplay(randCard);
+            window.renderCardToDisplay(randCard);
             counter += speed;
             if (counter >= 2500) {
                 clearInterval(drawInterval);
                 container.classList.remove('shaking');
                 let finalCard = ALL_18_CARDS[Math.floor(Math.random() * ALL_18_CARDS.length)];
-                renderCardToDisplay(finalCard);
+                window.renderCardToDisplay(finalCard);
                 // 自動連動底層下拉選單
                 document.getElementById('event-card').value = finalCard.effect;
                 setTimeout(() => { document.getElementById('close-draw-btn').style.display = 'block'; }, 1000);
@@ -579,11 +633,11 @@
     };
 
     // --- 名單拖曳邏輯 ---
-    function renderRosterDND() {
+    window.renderRosterDND = function() {
         const unassignedPool = document.getElementById('unassigned-pool');
         const groupsGrid = document.getElementById('groups-grid');
         unassignedPool.innerHTML = ''; groupsGrid.innerHTML = '';
-        for (let i = 1; i <= 7; i++) groupsGrid.innerHTML += `<div class="group-zone" id="zone-${i}" ondrop="drop(event, '${i}')" ondragover="allowDrop(event)"><h5>第 ${i} 組</h5></div>`;
+        for (let i = 1; i <= 7; i++) groupsGrid.innerHTML += `<div class="group-zone" id="zone-${i}" ondrop="window.drop(event, '${i}')" ondragover="window.allowDrop(event)"><h5>第 ${i} 組</h5></div>`;
         window.db.students.forEach(st => {
             if (!st.name) return;
             const pill = document.createElement('div');
@@ -594,7 +648,7 @@
                 if (zone) zone.appendChild(pill);
             } else unassignedPool.appendChild(pill);
         });
-    }
+    };
     window.allowDrop = function(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); };
     window.drag = function(ev) { ev.dataTransfer.setData("text", ev.target.id); };
     window.drop = function(ev, groupId) {
@@ -621,21 +675,20 @@
     };
 
     // --- 極速申購邏輯 ---
-    let currentFastBuyerId = null; let currentFastStockId = null;
-    function renderFastBuyerGrid() {
+    window.renderFastBuyerGrid = function() {
         const grid = document.getElementById('buyer-grid');
         grid.innerHTML = '';
         window.db.students.filter(s => s.name !== '').forEach(st => {
             const hasTrades = window.db.transactions.some(t => t.studentId === st.id);
             const btn = document.createElement('button');
-            btn.className = `buyer-btn ${hasTrades ? 'has-trades' : ''} ${currentFastBuyerId === st.id ? 'selected' : ''}`;
+            btn.className = `buyer-btn ${hasTrades ? 'has-trades' : ''} ${window.currentFastBuyerId === st.id ? 'selected' : ''}`;
             btn.innerText = `${st.id}. ${st.name}`;
             btn.onclick = () => window.selectFastBuyer(st.id, btn);
             grid.appendChild(btn);
         });
-    }
+    };
     window.selectFastBuyer = function(studentId, btnElement) {
-        currentFastBuyerId = studentId; currentFastStockId = null;
+        window.currentFastBuyerId = studentId; window.currentFastStockId = null;
         document.querySelectorAll('.buyer-btn').forEach(b => b.classList.remove('selected'));
         if(btnElement) btnElement.classList.add('selected');
         const st = window.db.students.find(s => s.id === studentId);
@@ -643,21 +696,21 @@
         document.querySelectorAll('.stock-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('amount-selector').style.display = 'none';
         document.getElementById('trade-panel').style.display = 'block';
-        updateQuotaDisplay();
+        window.updateQuotaDisplay();
     };
-    function updateQuotaDisplay() {
-        if (!currentFastBuyerId) return;
-        const myTxs = window.db.transactions.filter(t => t.studentId === currentFastBuyerId);
+    window.updateQuotaDisplay = function() {
+        if (!window.currentFastBuyerId) return;
+        const myTxs = window.db.transactions.filter(t => t.studentId === window.currentFastBuyerId);
         const groupShares = myTxs.filter(t => t.stockId !== '00504').reduce((sum, t) => sum + t.amount, 0);
         const etfShares = myTxs.filter(t => t.stockId === '00504').reduce((sum, t) => sum + t.amount, 0);
         document.getElementById('quota-group').innerText = groupShares;
         document.getElementById('quota-group').style.color = groupShares >= 5 ? 'var(--success)' : '#fff';
         document.getElementById('quota-etf').innerText = etfShares;
         document.getElementById('quota-etf').style.color = etfShares >= 1 ? 'var(--success)' : '#fff';
-    }
+    };
     window.selectFastStock = function(stockId) {
-        if (!currentFastBuyerId) return;
-        currentFastStockId = stockId;
+        if (!window.currentFastBuyerId) return;
+        window.currentFastStockId = stockId;
         const btns = document.querySelectorAll('.stock-btn');
         btns.forEach(b => b.classList.remove('active'));
         const targetBtn = Array.from(btns).find(b => { return stockId === '00504' ? b.innerText.includes('00504') : b.innerText.includes(`第 ${stockId} 組`); });
@@ -665,23 +718,23 @@
         document.getElementById('amount-selector').style.display = 'block';
     };
     window.executeFastBuy = function(amount) {
-        if (!currentFastBuyerId || !currentFastStockId) return;
-        const student = window.db.students.find(s => s.id === currentFastBuyerId);
+        if (!window.currentFastBuyerId || !window.currentFastStockId) return;
+        const student = window.db.students.find(s => s.id === window.currentFastBuyerId);
         if (!student.group) return window.showModal('申購失敗', '該學生尚未分配組別，無法進行交易！');
-        if (student.group === currentFastStockId) return window.showModal('規則限制', '法規禁止申購自己所屬組別的股票！');
-        const myTxs = window.db.transactions.filter(t => t.studentId === currentFastBuyerId);
+        if (student.group === window.currentFastStockId) return window.showModal('規則限制', '法規禁止申購自己所屬組別的股票！');
+        const myTxs = window.db.transactions.filter(t => t.studentId === window.currentFastBuyerId);
         const currentGroupShares = myTxs.filter(t => t.stockId !== '00504').reduce((sum, t) => sum + t.amount, 0);
         const currentETFShares = myTxs.filter(t => t.stockId === '00504').reduce((sum, t) => sum + t.amount, 0);
-        if (currentFastStockId === '00504') { if (currentETFShares + amount > 1) return window.showModal('額度不足', '每人每月最多只能申購 1 張 00504 ETF。'); } 
+        if (window.currentFastStockId === '00504') { if (currentETFShares + amount > 1) return window.showModal('額度不足', '每人每月最多只能申購 1 張 00504 ETF。'); } 
         else { if (currentGroupShares + amount > 5) return window.showModal('額度不足', `每人每月最多申購 5 張小組股票（目前已申購 ${currentGroupShares} 張）。`); }
         
-        window.db.transactions.push({ studentId: currentFastBuyerId, stockId: currentFastStockId, amount: amount, priceBought: INITIAL_PRICE });
+        window.db.transactions.push({ studentId: window.currentFastBuyerId, stockId: window.currentFastStockId, amount: amount, priceBought: INITIAL_PRICE });
         window.saveDataToCloud(); 
         document.querySelectorAll('.stock-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('amount-selector').style.display = 'none';
-        currentFastStockId = null;
+        window.currentFastStockId = null;
     };
-    function renderTransactionsMerged() {
+    window.renderTransactionsMerged = function() {
         const tbody = document.querySelector('#portfolio-table tbody');
         tbody.innerHTML = '';
         window.db.students.filter(s => s.name !== '').forEach(st => {
@@ -690,21 +743,22 @@
             let badges = ''; let totalInvested = 0;
             myTxs.forEach((tx) => {
                 totalInvested += (tx.amount * INITIAL_PRICE);
-                badges += `<span class="trade-badge"><span>${getStockName(tx.stockId)} x${tx.amount}</span><button title="撤銷" onclick="deleteTxMerged('${st.id}', '${tx.stockId}')">✖</button></span>`;
+                badges += `<span class="trade-badge"><span>${window.getStockName(tx.stockId)} x${tx.amount}</span><button title="撤銷" onclick="window.deleteTxMerged('${st.id}', '${tx.stockId}')">✖</button></span>`;
             });
-            tbody.innerHTML += `<tr><td>${st.id}. ${st.name}</td><td style="color:var(--text-muted);">第 ${st.group} 組</td><td style="text-align:left; max-width:300px; white-space:normal;">${badges}</td><td style="font-weight:bold;">${formatMoney(totalInvested)}</td></tr>`;
+            tbody.innerHTML += `<tr><td>${st.id}. ${st.name}</td><td style="color:var(--text-muted);">第 ${st.group} 組</td><td style="text-align:left; max-width:300px; white-space:normal;">${badges}</td><td style="font-weight:bold;">${window.formatMoney(totalInvested)}</td></tr>`;
         });
-    }
+    };
     window.deleteTxMerged = function(studentId, stockId) {
         window.db.transactions = window.db.transactions.filter(t => !(t.studentId === studentId && t.stockId === stockId));
         window.saveDataToCloud(); 
     };
 
-    function renderScoreInputs(containerId, inputClass) {
+    window.renderScoreInputs = function(containerId, inputClass) {
         const container = document.getElementById(containerId); container.innerHTML = '';
         for (let i = 1; i <= 7; i++) container.innerHTML += `<div class="form-group"><label>第 ${i} 組總分：</label><input type="number" class="${inputClass}" data-group="${i}" placeholder="..."></div>`;
-    }
-    let tempNewPrices = {}; let tempChanges = {}; 
+    };
+
+    window.tempNewPrices = {}; window.tempChanges = {}; 
 
     // --- 週末結算核心計算邏輯 (連動 18 張卡片公式) ---
     window.previewWeeklyPrice = function() {
@@ -765,10 +819,10 @@
             calcMap[group.id] = { newPrice, priceChange, scoreDiff, taxDeducted, currentPrice: group.currentPrice };
         });
 
-        tempNewPrices = {}; tempChanges = {}; let resultRows = [];
+        window.tempNewPrices = {}; window.tempChanges = {}; let resultRows = [];
         sortedScores.forEach((group, index) => {
             let data = calcMap[group.id];
-            tempNewPrices[group.id] = data.newPrice; tempChanges[group.id] = data.priceChange;
+            window.tempNewPrices[group.id] = data.newPrice; window.tempChanges[group.id] = data.priceChange;
             let changeClass = data.priceChange > 0 ? 'text-up' : (data.priceChange < 0 ? 'text-down' : 'text-neutral');
             let changeSymbol = data.priceChange > 0 ? '▲ +' : (data.priceChange < 0 ? '▼ ' : '— '); // 自動帶負號
             let taxNote = data.taxDeducted ? ' <span style="font-size:0.8rem;color:var(--warning);">(扣稅200)</span>' : '';
@@ -781,19 +835,19 @@
         let etfCurrent = window.db.stockPrices['00504']; let etfNewPrice = 0; let etfNote = "";
         if (event === 'etf_change') { 
             let randomId = Math.floor(Math.random() * 7) + 1; 
-            etfNewPrice = tempNewPrices[randomId.toString()]; 
+            etfNewPrice = window.tempNewPrices[randomId.toString()]; 
             etfNote = `經理人換將 (單壓第 ${randomId} 組)`; 
         } else if (event === 'etf_risk') { 
             let lastGroup = sortedScores[6]; 
-            etfNewPrice = tempNewPrices[lastGroup.id]; 
+            etfNewPrice = window.tempNewPrices[lastGroup.id]; 
             etfNote = `權重調整 (與最後一名同價)`; 
         } else { 
-            let sum = Object.keys(tempNewPrices).reduce((acc, val) => acc + tempNewPrices[val], 0); 
+            let sum = Object.keys(window.tempNewPrices).reduce((acc, val) => acc + window.tempNewPrices[val], 0); 
             etfNewPrice = Math.round(sum / 7); 
             etfNote = `追蹤大盤 (7組平均價)`; 
         }
 
-        tempNewPrices['00504'] = etfNewPrice; let etfChange = etfNewPrice - etfCurrent; tempChanges['00504'] = etfChange;
+        window.tempNewPrices['00504'] = etfNewPrice; let etfChange = etfNewPrice - etfCurrent; window.tempChanges['00504'] = etfChange;
         let etfChangeClass = etfChange > 0 ? 'text-up' : (etfChange < 0 ? 'text-down' : 'text-neutral');
         let etfChangeSymbol = etfChange > 0 ? '▲ +' : (etfChange < 0 ? '▼ ' : '— ');
         resultRows.push(`<tr style="background: rgba(210,153,34,0.1); border-top: 2px solid #d29922;"><td>🎯 <strong>ETF</strong></td><td style="color:#d29922; font-weight:bold;">00504</td><td style="color:var(--text-muted); font-size:0.85rem;">${etfNote}</td><td>${etfCurrent}</td><td class="${etfChangeClass}">${etfChangeSymbol}${Math.abs(etfChange)}</td><td style="font-weight:bold; font-size:1.1rem; color: #d29922;">${etfNewPrice}</td></tr>`);
@@ -803,7 +857,7 @@
     };
 
     window.confirmWeeklyApply = function() {
-        window.db.stockPrices = { ...tempNewPrices }; window.db.lastWeekChanges = { ...tempChanges }; 
+        window.db.stockPrices = { ...window.tempNewPrices }; window.db.lastWeekChanges = { ...window.tempChanges }; 
         window.saveDataToCloud();
         document.querySelectorAll('.weekly-score').forEach(input => input.value = '');
         document.getElementById('weekly-preview-card').style.display = 'none';
@@ -866,16 +920,16 @@
     // --- 本機資料存檔防呆 (當 Firebase 未就緒時的備用方案) ---
     window.saveDataToCloud = function() {
         localStorage.setItem('504_stock_exchange_v5', JSON.stringify(window.db));
-        updateAllUI();
+        window.updateAllUI();
     };
 
-    function updateAllUI() {
-        renderRosterDND();
-        renderFastBuyerGrid();
-        renderTransactionsMerged();
-        if (document.getElementById('kiosk-mode').style.display === 'block') renderKioskGrid();
-        if (currentFastBuyerId) updateQuotaDisplay();
-    }
+    window.updateAllUI = function() {
+        if(window.renderRosterDND) window.renderRosterDND();
+        if(window.renderFastBuyerGrid) window.renderFastBuyerGrid();
+        if(window.renderTransactionsMerged) window.renderTransactionsMerged();
+        if(document.getElementById('kiosk-mode').style.display === 'block' && window.renderKioskGrid) window.renderKioskGrid();
+        if(window.currentFastBuyerId && window.updateQuotaDisplay) window.updateQuotaDisplay();
+    };
 
     // 啟動畫面
     initDropdown();
@@ -910,7 +964,7 @@
         const stored = localStorage.getItem('504_stock_exchange_v5');
         if (stored) window.db = JSON.parse(stored);
         else initializeEmptyDb();
-        updateAllUI();
+        window.updateAllUI();
     }
 
     function setupRealtimeSync() {
@@ -922,7 +976,7 @@
                 window.db = docSnap.data();
                 document.getElementById('sync-indicator').classList.add('synced'); 
                 document.getElementById('sync-indicator').nextSibling.textContent = ' STATUS: 雲端即時同步中 (Online)';
-                updateAllUI();
+                window.updateAllUI();
             } else {
                 initializeEmptyDb();
                 window.saveDataToCloud();
@@ -960,7 +1014,7 @@
                         await fsSetDoc(dRef, window.db);
                     } catch (e) { console.error("同步失敗", e); }
                 }
-                updateAllUI();
+                window.updateAllUI();
             };
 
             await signInAnonymously(auth);
