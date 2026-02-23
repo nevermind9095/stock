@@ -255,10 +255,10 @@
             
             <div class="form-grid" style="grid-template-columns: 2fr 1fr;">
                 <div class="form-group" style="grid-column: span 2;">
-                    <label>本週最終事件決議：</label>
+                    <label>本週結算事件 (請選擇「上週」抽出的卡片)：</label>
                     <div style="display: flex; gap: 10px;">
                         <select id="event-card" style="flex:1; font-weight:bold; color:var(--warning); background:#21262d;"></select>
-                        <button class="btn btn-warning" onclick="window.openDrawModal()" style="font-size: 1.1rem; padding: 10px 25px;">🎲 輪盤抽籤</button>
+                        <button class="btn btn-warning" onclick="window.openDrawModal()" style="font-size: 1.1rem; padding: 10px 25px;">🎲 抽取下週卡片</button>
                     </div>
                 </div>
             </div>
@@ -383,7 +383,8 @@
 
 <div class="modal-overlay" id="draw-modal">
     <div class="modal" style="text-align:center; max-width: 450px;">
-        <h2>🃏 命運事件卡</h2>
+        <h2>🃏 下週命運事件卡</h2>
+        <p style="color:var(--text-muted); margin-bottom: 15px;">預告下週市場動態，請所有投資人注意！</p>
         
         <div id="card-display-container" class="card-display-container">
             <img id="card-img-display" src="" alt="事件卡">
@@ -582,7 +583,44 @@
         document.getElementById('student-portfolio-modal').style.display = 'flex';
     };
 
+    // --- 🔊 抽籤音效產生器 (Web Audio API，不需外部檔案) ---
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    
+    function playTickSound() {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1000, audioCtx.currentTime); // 高頻滴答聲
+        osc.frequency.exponentialRampToValueAtTime(500, audioCtx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime); // 音量
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+    }
+    
+    function playTadaSound() {
+        if (!audioCtx) return;
+        const osc1 = audioCtx.createOscillator(); const osc2 = audioCtx.createOscillator(); const osc3 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc1.type = 'triangle'; osc2.type = 'triangle'; osc3.type = 'triangle';
+        // 產生歡樂的 C 大調和弦音效
+        osc1.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+        osc2.frequency.setValueAtTime(659.25, audioCtx.currentTime); // E5
+        osc3.frequency.setValueAtTime(783.99, audioCtx.currentTime); // G5
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+        osc1.connect(gain); osc2.connect(gain); osc3.connect(gain); gain.connect(audioCtx.destination);
+        osc1.start(); osc2.start(); osc3.start();
+        osc1.stop(audioCtx.currentTime + 1.5); osc2.stop(audioCtx.currentTime + 1.5); osc3.stop(audioCtx.currentTime + 1.5);
+    }
+
     // --- 🃏 抽籤系統 (已修復點擊無反應問題) ---
+    let drawInterval;
     window.openDrawModal = function() {
         const imgEl = document.getElementById('card-img-display');
         const fallbackEl = document.getElementById('card-fallback');
@@ -610,6 +648,7 @@
     };
 
     window.startDraw = function() {
+        initAudio(); // 啟動音效引擎 (解決瀏覽器限制)
         document.getElementById('draw-btn').style.display = 'none';
         document.getElementById('close-draw-btn').style.display = 'none';
         const container = document.getElementById('card-display-container');
@@ -617,6 +656,7 @@
         
         let counter = 0; let speed = 80; 
         drawInterval = setInterval(() => {
+            playTickSound(); // 播放跑動音效
             let randCard = ALL_18_CARDS[Math.floor(Math.random() * ALL_18_CARDS.length)];
             window.renderCardToDisplay(randCard);
             counter += speed;
@@ -625,8 +665,11 @@
                 container.classList.remove('shaking');
                 let finalCard = ALL_18_CARDS[Math.floor(Math.random() * ALL_18_CARDS.length)];
                 window.renderCardToDisplay(finalCard);
-                // 自動連動底層下拉選單
-                document.getElementById('event-card').value = finalCard.effect;
+                playTadaSound(); // 播放開獎音效
+                
+                // 【已移除】不再自動連動底層下拉選單，留給下週結算使用
+                // document.getElementById('event-card').value = finalCard.effect; 
+                
                 setTimeout(() => { document.getElementById('close-draw-btn').style.display = 'block'; }, 1000);
             }
         }, speed);
